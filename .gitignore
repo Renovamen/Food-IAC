@@ -1,3 +1,6 @@
+/outputs/
+/checkpoints/
+
 # Editors
 .vscode/
 .idea/

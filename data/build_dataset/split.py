@@ -9,8 +9,10 @@ import numpy as np
 from nltk.tokenize import RegexpTokenizer
 from tqdm import tqdm
 
-input_path = '/Users/zou/Renovamen/Developing/food-iac/data/aspects/'
-output_path = '/Users/zou/Renovamen/Developing/food-iac/data/final/'
+base_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+
+input_path = os.path.join(base_path, 'aspects')
+output_path = os.path.join(base_path, 'final')
 
 aspect_name = [
     'color_light.json',
@@ -22,7 +24,7 @@ aspect_name = [
 ]
 
 # the whole dataset
-all_path = '/Users/zou/Renovamen/Developing/food-iac/data/clean.json'
+all_path = os.path.join(base_path, 'clean.json')
 
 tokenizer = RegexpTokenizer(r'\w+\S*\w*')
 
@@ -70,7 +72,7 @@ if __name__ == '__main__':
         train_indice, val_indice, test_indice = split_indice(img_num)
 
         split_image_list = []
-        for imgID, img in enumerate(tqdm(image_list, desc = 'Splited images: ')):
+        for imgID, img in enumerate(tqdm(image_list, desc = 'Splited images')):
             if imgID in train_indice:
                 img['split'] = 'train'
             elif imgID in val_indice:
