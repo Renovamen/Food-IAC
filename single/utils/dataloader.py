@@ -4,9 +4,10 @@ import h5py
 import json
 import os
 
-# A PyTorch Dataset class to be used in a PyTorch DataLoader to create batches.
 class CaptionDataset(Dataset):
     '''
+    A PyTorch Dataset class to be used in a PyTorch DataLoader to create batches.
+
     input params:
         data_folder: folder where data files are stored
         data_name: base name of processed datasets

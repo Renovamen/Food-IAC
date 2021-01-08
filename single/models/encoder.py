@@ -2,7 +2,6 @@ import torch
 from torch import nn
 import torchvision
 
-
 class ResNet101(nn.Module):
     '''
     class ResNet101(): (pretrained) ResNet-101 network
