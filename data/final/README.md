@@ -24,3 +24,5 @@ This folder contains the captions related to each of the images stored in `json`
   ]
 }
 ```
+
+train : val : test ≈ 6 : 1 : 1
