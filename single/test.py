@@ -1,5 +1,5 @@
 '''
-Compute the correct BLEU, CIDEr, ROUGE and METEOR scores for a 
+Compute the correct BLEU, CIDEr, ROUGE and METEOR scores for a
 checkpoint on the val or test sets without Teacher Forcing.
 '''
 
@@ -40,7 +40,7 @@ encoder.eval()
 # load word map (word2ix)
 with open(word_map_file, 'r') as j:
     word_map = json.load(j)
-    
+
 vocab_size = len(word_map)
 
 # create ix2word map
@@ -60,7 +60,7 @@ input params:
     beam_size: beam size at which to generate captions for evaluation
                set beam_size = 1 if you want to use greedy search
 
-return: 
+return:
     bleu4: BLEU-4 score
 '''
 def evaluate(beam_size):
@@ -68,14 +68,14 @@ def evaluate(beam_size):
     # DataLoader
     loader = torch.utils.data.DataLoader(
         CaptionDataset(
-            data_folder, data_name, 'test', 
+            data_folder, data_name, 'test',
             transform = transforms.Compose([normalize])
         ),
         # TODO: batched beam search
         # therefore, DO NOT use a batch_size greater than 1 - IMPORTANT!
-        batch_size = 1, 
-        shuffle = True, 
-        num_workers = 1, 
+        batch_size = 1,
+        shuffle = True,
+        num_workers = 1,
         pin_memory = True
     )
 
@@ -102,7 +102,7 @@ def evaluate(beam_size):
 
         # prediction (beam search)
         seq, _, _ = decoder.beam_search(encoder_out, beam_size, word_map)
-    
+
         pred = [w for w in seq if w not in {word_map['<start>'], word_map['<end>'], word_map['<pad>']}]
         prediction.append(pred)
 
@@ -116,7 +116,7 @@ def evaluate(beam_size):
 
 
 if __name__ == '__main__':
-    
+
     beam_size = 5
 
     (bleu1, bleu2, bleu3, bleu4), cider, rouge, meteor = evaluate(beam_size)

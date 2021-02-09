@@ -19,10 +19,10 @@ input params:
     image_path: path to image
     word_map: word map
     beam_size: number of sequences to consider at each decode-step
-return: 
+return:
     seq: caption
     alphas: weights for visualization
-''' 
+'''
 def generate_caption(encoder, decoder, image_path, word_map, beam_size = 3):
 
     # Read image and process
@@ -45,7 +45,7 @@ def generate_caption(encoder, decoder, image_path, word_map, beam_size = 3):
     # encode
     image = image.unsqueeze(0)  # (1, 3, 256, 256)
     encoder_out = encoder(image)  # (1, enc_image_size, enc_image_size, encoder_dim)
- 
+
     # prediction (beam search)
     seq, alphas, betas = decoder.beam_search(encoder_out, beam_size, word_map)
     return seq, alphas, betas
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     seq, alphas, betas = generate_caption(encoder, decoder, img, word_map, beam_size)
     alphas = torch.FloatTensor(alphas)
     visualize_att_beta(
-        image_path = img, 
+        image_path = img,
         seq = seq,
         rev_word_map = rev_word_map,
         alphas = alphas,

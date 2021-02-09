@@ -61,13 +61,13 @@ def visualize_att_beta(image_path, seq, alphas, rev_word_map, betas, smooth = Tr
             break
 
         plt.subplot(grid[fig_height - 1, img_size + t - 1])
-        
+
         # images
         plt.imshow(image)
-        
+
         # words of sentence
         plt.text(0, 500, '%s' % (words[t]), color = 'black', backgroundcolor = 'white', fontsize = 10)
-        
+
         # alphas
         current_alpha = alphas[t, :]
         if smooth:
@@ -118,20 +118,20 @@ def visualize_att(image_path, seq, alphas, rev_word_map, smooth = True):
         plt.text(0, 1, '%s' % (words[t]), color = 'black', backgroundcolor = 'white', fontsize = 12)
 
         plt.imshow(image)
-        
+
         current_alpha = alphas[t, :]
 
         if smooth:
             alpha = skimage.transform.pyramid_expand(current_alpha.numpy(), upscale = 24, sigma = 8)
         else:
             alpha = skimage.transform.resize(current_alpha.numpy(), [14 * 24, 14 * 24])
-        
+
         if t == 0:
             plt.imshow(alpha, alpha = 0)
         else:
             plt.imshow(alpha, alpha = 0.8)
-        
+
         plt.set_cmap(cm.Greys_r)
         plt.axis('off')
-    
+
     plt.show()

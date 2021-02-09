@@ -9,7 +9,7 @@ def my_lcs(string, sub):
         string(list of str): tokens from a string split using whitespace
         sub(list of str): shorter string, also split using whitespace
 
-    returns: 
+    returns:
         length(list of int): length of the longest common subsequence between the two strings
 
     Note: my_lcs only gives length of the longest common subsequence, not the actual LCS
@@ -81,12 +81,12 @@ class Rouge():
         input params:
             reference(list): reference sentences ([[ref1a, ref1b, ref1c], ..., [refna, refnb]])
             hypothesis(list): predicted sentences ([[hypo1], [hypo2], ..., [hypon]])
-        
-        return: 
+
+        return:
             average_score(float): mean ROUGE-L score computed by averaging scores for all the images
             scores: ROUGE-L scores computed for each image
         '''
-        
+
         assert len(reference) == len(hypothesis)
 
         score = []

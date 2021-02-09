@@ -52,7 +52,7 @@ def getResponse(url):
             # ignor "unverified https request" warning
             requests.packages.urllib3.disable_warnings()
             response = requests.get(
-                url = url, 
+                url = url,
                 headers = headers,
                 proxies = proxies,
                 timeout = time_out,
@@ -88,7 +88,7 @@ def getImageList(page):
 # get the "Statistics" data of each image
 def getStat(soup):
 
-    infoList = soup.find_all('tr', {'class':'forum-bg1'})[1].contents[1].contents  
+    infoList = soup.find_all('tr', {'class':'forum-bg1'})[1].contents[1].contents
     statData = {}
 
     for i in range(len(infoList)):
@@ -179,18 +179,18 @@ if __name__ == '__main__':
     with open(cap_json_path, 'r') as f:
         data = json.load(f)
         f.close()
-    
+
     for page in range(171, pageNum):
 
         print("--------- page ", page, " start ---------")
 
         itemList = getImageList(page)
-        
+
         for item in itemList:
 
             # image ID
             imgID = item.lstrip('/image.php?IMAGE_ID=') + '.jpg'
-            
+
             # ignore the images that are already exist
             if imgID in data:
                 print("image ", imgID, " is already exist")
@@ -225,7 +225,7 @@ if __name__ == '__main__':
             else:
                 # no "Statistics" info, ignore
                 continue
-            
+
             print("--- getting image ", imgID, " ... ---")
 
             # download image
@@ -237,9 +237,9 @@ if __name__ == '__main__':
                 f.close()
 
             time.sleep(random.randint(3, 10))
-        
+
         print("--------- page ", page, " done ---------")
         time.sleep(random.randint(5, 20))
-    
+
     # find out corrupt images and fix them
     checkImage()

@@ -30,8 +30,8 @@ class Trainer:
 
     def __init__(self, epochs, device, word_map, rev_word_map,
                     start_epoch, epochs_since_improvement, best_bleu4,
-                    train_loader, val_loader, 
-                    encoder, decoder, 
+                    train_loader, val_loader,
+                    encoder, decoder,
                     encoder_optimizer, decoder_optimizer,
                     loss_function, grad_clip, fine_tune_encoder,
                     tensorboard = False, log_dir = None):
@@ -58,7 +58,7 @@ class Trainer:
         self.fine_tune_encoder = fine_tune_encoder
 
         self.print_freq = 100  # print training/validation stats every __ batches
-        # setup visualization writer instance                
+        # setup visualization writer instance
         self.writer = TensorboardWriter(log_dir, tensorboard)
         self.len_epoch = len(self.train_loader)
 
@@ -94,7 +94,7 @@ class Trainer:
 
             # forward decoder
             scores, caps_sorted, decode_lengths, sort_ind = self.decoder(imgs, caps, caplens)
-    
+
             # since we decoded starting with <start>, the targets are all words after <start>, up to <end>
             targets = caps_sorted[:, 1:]
 
@@ -110,7 +110,7 @@ class Trainer:
             self.decoder_optimizer.zero_grad()
             if self.encoder_optimizer is not None:
                 self.encoder_optimizer.zero_grad()
-            
+
             # backward
             loss.backward()
 
@@ -146,7 +146,7 @@ class Trainer:
                     'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                     'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, i, len(self.train_loader),
                                                                             batch_time = batch_time,
-                                                                            data_time = data_time, 
+                                                                            data_time = data_time,
                                                                             loss = losses,
                                                                             top5 = top5accs)
                 )
@@ -161,7 +161,7 @@ class Trainer:
             decoder: a decoder (based on LSTM)
             loss_function: loss function (cross entropy)
 
-        return: 
+        return:
             bleu4: BLEU-4 score
         '''
 
@@ -189,13 +189,13 @@ class Trainer:
                 caps = caps.to(self.device)
                 caplens = caplens.to(self.device)
 
-                # forward encoder 
+                # forward encoder
                 if self.encoder is not None:
                     imgs = self.encoder(imgs)
-                
-                # forward decoder 
+
+                # forward decoder
                 scores, caps_sorted, decode_lengths, sort_ind = self.decoder(imgs, caps, caplens)
-                    
+
                 # since we decoded starting with <start>, the targets are all words after <start>, up to <end>
                 targets = caps_sorted[:, 1:]
 
@@ -220,9 +220,9 @@ class Trainer:
                     print('Validation: [{0}/{1}]\t'
                         'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                        'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})\t'.format(i, len(self.val_loader), 
+                        'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})\t'.format(i, len(self.val_loader),
                                                                                     batch_time = batch_time,
-                                                                                    loss = losses, 
+                                                                                    loss = losses,
                                                                                     top5 = top5accs)
                     )
 
@@ -301,12 +301,12 @@ class Trainer:
 
             # save checkpoint
             save_checkpoint(
-                epoch = epoch, 
-                epochs_since_improvement = self.epochs_since_improvement, 
-                encoder = self.encoder, 
-                decoder = self.decoder, 
+                epoch = epoch,
+                epochs_since_improvement = self.epochs_since_improvement,
+                encoder = self.encoder,
+                decoder = self.decoder,
                 encoder_optimizer = self.encoder_optimizer,
                 decoder_optimizer = self.decoder_optimizer,
-                bleu4 = recent_bleu4, 
+                bleu4 = recent_bleu4,
                 is_best = is_best
             )

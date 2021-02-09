@@ -27,7 +27,7 @@ def save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_o
     }
     filename = 'checkpoint_' + config.model_basename + '.pth.tar'
     torch.save(state, config.model_path + filename)
-    
+
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
     if is_best:
         torch.save(state, config.model_path + 'best_' + filename)
@@ -69,7 +69,7 @@ def load_checkpoint(checkpoint_path, fine_tune_encoder, encoder_lr):
             params = filter(lambda p: p.requires_grad, encoder.CNN.parameters()),
             lr = encoder_lr
         )
-    
+
     return encoder, encoder_optimizer, decoder, decoder_optimizer, \
             start_epoch, epochs_since_improvement, best_bleu4
 
@@ -140,16 +140,16 @@ def accuracy(scores, targets, k):
         targets: true labels
         k: k in top-k accuracy
 
-    return: 
+    return:
         top-k accuracy
     '''
 
     batch_size = targets.size(0)
     # Return the indices of the top-k elements along the first dimension (along every row of a 2D Tensor), sorted
     _, ind = scores.topk(k, 1, True, True)
-    # The target tensor is the same for each of the top-k predictions (words). Therefore, we need to expand it to  
+    # The target tensor is the same for each of the top-k predictions (words). Therefore, we need to expand it to
     # the same shape as the tensor (ind)
-    # (double every label in the row --> so every row will contain k elements/k columns) 
+    # (double every label in the row --> so every row will contain k elements/k columns)
     correct = ind.eq(targets.view(-1, 1).expand_as(ind))
     # Sum up the correct predictions --> we will now have one value (the sum)
     correct_total = correct.view(-1).float().sum()  # 0D tensor

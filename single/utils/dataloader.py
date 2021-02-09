@@ -14,7 +14,7 @@ class CaptionDataset(Dataset):
         split: 'train', 'val', 'test'
         transform: image transform pipeline
     '''
-    
+
     def __init__(self, data_folder, data_name, split, transform = None):
         self.split = split
         assert self.split in {'train', 'val', 'test'}

@@ -11,7 +11,7 @@ class config:
 
     # dataset parameters
     dataset_image_path = os.path.join(base_path, 'data/images/')
-    dataset_caption_path = os.path.join(base_path, 'data/final/color_light.json')
+    dataset_caption_path = os.path.join(base_path, 'data/final/dof_and_focus.json')
     dataset_output_path = os.path.join(base_path, 'outputs/')  # folder with data files saved by preprocess.py
     dataset_basename = 'fiac'  # any name you want
 
@@ -35,7 +35,7 @@ class config:
     decoder_dim = 512  # dimension of decoder's hidden layer
     dropout = 0.5
     model_path = os.path.join(base_path, 'checkpoints/')  # path to save checkpoints
-    model_basename = 'single'  # any name you want
+    model_basename = 'single_dof'  # any name you want
 
     # training parameters
     epochs = 20
@@ -46,7 +46,7 @@ class config:
     grad_clip = 5.  # gradient threshold in clip gradients
     checkpoint = None  # path to load checkpoint, None if none
     workers = 1  # num_workers in dataloader
-    
+
     # tensorboard
     tensorboard = True  # enable tensorboard or not?
     log_dir = os.path.join(base_path, 'logs/single/')  # folder for saving logs for tensorboard

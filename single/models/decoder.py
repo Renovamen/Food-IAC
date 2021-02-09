@@ -29,12 +29,12 @@ class Sentinel(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
         self.init_weights()
-    
+
     def init_weights(self):
         '''
         intalize W_x and W_h
         '''
-        
+
         init.xavier_uniform_(self.w_x[1].weight)
         init.xavier_uniform_(self.w_h[1].weight)
 
@@ -46,9 +46,9 @@ class Sentinel(nn.Module):
             m_t: cell state at time t (batch_size, decoder_dim)
         return:
             s_t: visual sentinel (batch_size, decoder_dim)
-        ''' 
+        '''
 
-        # eq.9: g_t = sigmoid(W_x * x_t + W_h * h_{t-1})        
+        # eq.9: g_t = sigmoid(W_x * x_t + W_h * h_{t-1})
         g_t = self.w_x(x_t) + self.w_h(h_last)  # (batch_size, decoder_dim)
         g_t = self.sigmoid(g_t)  # (batch_size, decoder_dim)
         # eq.10: s_t = g_t ⊙ tanh(m_t)
@@ -63,13 +63,13 @@ class LSTM1(nn.Module):
     input params:
         input_size: dimention of x_t^1 ([ h_last^2; w_t; v^g ] => 2 * embed_dim + decoder_dim)
         decoder_dim: dimention of decoder's hidden layer
-    ''' 
+    '''
 
     def __init__(self, input_size, decoder_dim):
         super(LSTM1, self).__init__()
         self.LSTM = nn.LSTMCell(input_size, decoder_dim, bias = True)
         self.sentinel = Sentinel(input_size, decoder_dim)
-    
+
     def forward(self, x_t, states):
         '''
         input params:
@@ -81,7 +81,7 @@ class LSTM1(nn.Module):
             h_t^1: hiddent state of LSTM1 at time t (batch_size, decoder_dim)
             m_t^1: cell state of LSTM1 at time t (batch_size, decoder_dim)
             s_t: visual sentinel at time t (batch_size, decoder_dim)
-        ''' 
+        '''
 
         h_last, m_last = states
         h_t, m_t = self.LSTM(x_t, (h_last, m_last))
@@ -96,12 +96,12 @@ class LSTM2(nn.Module):
     input params:
         input_size: dimention of x_t^2 ([ c_t; h_t^1 ] => 2 * decoder_dim)
         decoder_dim: dimention of decoder's hidden layer
-    ''' 
+    '''
 
     def __init__(self, input_size, decoder_dim):
         super(LSTM2, self).__init__()
         self.LSTM = nn.LSTMCell(input_size, decoder_dim, bias = True)
-    
+
     def forward(self, x_t, states):
         '''
         input params:
@@ -112,7 +112,7 @@ class LSTM2(nn.Module):
         return:
             h_t^2: hiddent state of LSTM2 at time t (batch_size, decoder_dim)
             m_t^2: cell state at of LSTM2 time t (batch_size, decoder_dim)
-        ''' 
+        '''
 
         h_last, m_last = states
         h_t, m_t = self.LSTM(x_t, (h_last, m_last))
@@ -134,8 +134,8 @@ class AdaptiveAttention(nn.Module):
 
         self.affine_s = nn.Linear(decoder_dim, decoder_dim)
         self.affine_h = nn.Linear(decoder_dim, decoder_dim)
-        
-        self.w_s = nn.Linear(decoder_dim, attention_dim)   
+
+        self.w_s = nn.Linear(decoder_dim, attention_dim)
         self.w_g = nn.Linear(decoder_dim, attention_dim)
         self.w_v = nn.Linear(decoder_dim, attention_dim)
         self.w_h = nn.Linear(attention_dim, 1)
@@ -174,15 +174,15 @@ class AdaptiveAttention(nn.Module):
         # = w_h * tanh([W_v * V; W_s * s_t] + W_g * [h_t * 1^T; h_t])
         extended = self.tanh(extended + hidden_att)  # (batch_size, num_pixels + 1, attention_dim)
         z_t_extended = self.w_h(extended).squeeze(2)  # (batch_size, num_pixels + 1)
-        # eq.12: \hat{α}_t 
+        # eq.12: \hat{α}_t
         # = softmax([z_t; w_h * tanh(W_s * s_t + W_g * h_t)])
         # = softmax(z_t_extended)
         alpha_hat_t = self.softmax(z_t_extended)  # (batch_size, num_pixels + 1)
 
         concat_feature = torch.cat([V, s_t.unsqueeze(1)], dim = 1)  # (batch_size, num_pixels + 1, decoder_dim)
-        c_hat_t = (concat_feature * alpha_hat_t.unsqueeze(2)).sum(dim = 1)  # (batch_size, decoder_dim)     
-        
-        # eq.13: W_p(c_hat_t + h_t) 
+        c_hat_t = (concat_feature * alpha_hat_t.unsqueeze(2)).sum(dim = 1)  # (batch_size, decoder_dim)
+
+        # eq.13: W_p(c_hat_t + h_t)
         adaptive_out = self.tanh(self.W_p(c_hat_t + h_t))
 
         # β_t = \hat{α}_t[k + 1]
@@ -190,7 +190,7 @@ class AdaptiveAttention(nn.Module):
 
         # remember, \hat{α} has been extended to num_pixels + 1 in adaptive attention, and we don't need the last element (used to compute beta) anymore
         return adaptive_out, alpha_hat_t[:, :-1], beta_t
-   
+
 
 class Decoder(nn.Module):
     def __init__(self, embed_dim, embeddings, fine_tune, attention_dim,
@@ -218,7 +218,7 @@ class Decoder(nn.Module):
         # embedding layer
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         self.set_embeddings(embeddings, fine_tune)
-        
+
         self.dropout = nn.Dropout(p = self.dropout)
         self.fc = nn.Linear(decoder_dim, vocab_size)  # layer to calc word probability over vocabulary
         self.init_weights()  # initialize embedding and fc layer with the uniform distribution
@@ -238,7 +238,7 @@ class Decoder(nn.Module):
 
         input param:
             embeddings: word embeddings
-            fine_tune: allow fine-tuning of embedding layer? 
+            fine_tune: allow fine-tuning of embedding layer?
                     (only makes sense when using pre-trained embeddings)
         '''
 
@@ -263,7 +263,7 @@ class Decoder(nn.Module):
 
         input params:
             spatial_feature: spatial image feature (batch_size, num_pixels, decoder_dim)
-        return: 
+        return:
             h: intial hidden state (batch_size, decoder_dim)
             c: intial cell state (batch_size, decoder_dim)
         '''
@@ -280,8 +280,8 @@ class Decoder(nn.Module):
                 1. global_image: global image feature (batch_size, embed_dim)
             encoded_captions: caption after one-hot encoding (batch_size, max_caption_length)
             caption_lengths: caption length (batch_size, 1)
-        
-        return: 
+
+        return:
             predictions: word probability over vocabulary predicted by model
             encoded_captions: sorted encoded captions
             decode lengths: actual caption length - 1
@@ -295,18 +295,18 @@ class Decoder(nn.Module):
         vocab_size = self.vocab_size
 
         # sort input captions by decreasing lengths
-        # because in 'train.py', 'pack_padded_sequence' will be used to deal with the pads in captions 
+        # because in 'train.py', 'pack_padded_sequence' will be used to deal with the pads in captions
         # and 'pack_padded_sequence' requires the captions sorted by decreasing lengths
         caption_lengths, sort_ind = caption_lengths.squeeze(1).sort(dim = 0, descending = True)
         # sort_ind contains elements of the batch index of the tensor encoder_out.
         # for example, if sort_ind is [3,2,0],
-        # then that means the descending order starts with batch number 3,then batch number 2, and finally batch number 0. 
+        # then that means the descending order starts with batch number 3,then batch number 2, and finally batch number 0.
         spatial_feature = spatial_feature[sort_ind]
         global_image = global_image[sort_ind]
         encoded_captions = encoded_captions[sort_ind]
 
         # word embedding
-        # each batch contains a caption, all batches have the same number of rows (words), 
+        # each batch contains a caption, all batches have the same number of rows (words),
         # since we previously padded the ones shorter than max_caption_length
         embeddings = self.embedding(encoded_captions)  # (batch_size, max_caption_length, embed_dim)
 
@@ -327,16 +327,16 @@ class Decoder(nn.Module):
 
         # start decoding
         for t in range(max(decode_lengths)):
-            # create a Packed Padded Sequence manually, to process only the effective batch size N_t at that timestep. 
+            # create a Packed Padded Sequence manually, to process only the effective batch size N_t at that timestep.
             # note that we cannot use 'pack_padded_sequence' provided by torch.util because we are using an LSTMCell, and not an LSTM
             batch_size_t = sum([l > t for l in decode_lengths])
-            
+
             # input of LSTM1 ([ h_last^2; w_t; v^g ])
             x_t_1 = torch.cat((h2[:batch_size_t], inputs[:batch_size_t, t, :]), dim = 1)  # (batch_size_t, embed_dim * 2 + decoder_dim)
-            
+
             # LSTM1
             h1, c1, s = self.LSTM1(x_t_1, (h1[:batch_size_t], c1[:batch_size_t]))  # (batch_size_t, decoder_dim)
-            
+
             # adaptive attention network
             att_output, _, _ = self.adaptive_attention(spatial_feature[:batch_size_t], h1, s)  # (batch_size_t, decoder_dim)
 
@@ -349,13 +349,13 @@ class Decoder(nn.Module):
             # calc word probability over vocabulary
             preds = self.fc(self.dropout(h2))  # (batch_size_t, vocab_size)
             predictions[:batch_size_t, t, :] = preds
-        
+
         return predictions, encoded_captions, decode_lengths, sort_ind
 
     def beam_search(self, encoder_out, beam_size, word_map):
         '''
         beam search (used in evaluation without Teacher Forcing and inference)
-        
+
         TODO: batched beam search
         therefore, DO NOT use a batch_size greater than 1 - IMPORTANT!
 
@@ -365,8 +365,8 @@ class Decoder(nn.Module):
                 1. global_image: global image feature (1, embed_dim)
             beam_size(int): beam size
             word_map(dict): word2id map
-        
-        return: 
+
+        return:
             seq(list[word_id1, ..., word_idn]): the predicted sentence after beam search
             alphas(list): attention weights at each time step
             betas(list): sentinel gate at each time step
@@ -377,21 +377,21 @@ class Decoder(nn.Module):
         k = beam_size
 
         spatial_feature, global_image = encoder_out # (1, num_pixels, decoder_dim), (1, embed_dim)
-        
+
         num_pixels = spatial_feature.size(1)
         enc_image_size = int(math.sqrt(num_pixels)) # enc_image_size * enc_image_size = num_pixels
-        
+
         # dimention of spatial image feature should be the same as dimention of decoder's hidden layer
         decoder_dim = spatial_feature.size(-1)
         assert decoder_dim == self.decoder_dim
-        
+
         # check the size of vocabulary
         assert len(word_map) == self.vocab_size
         vocab_size = len(word_map)
 
         # we'll treat the problem as having a batch size of k
         spatial_feature = spatial_feature.expand(k, num_pixels, decoder_dim)  # (k, num_pixels, decoder_dim)
-        
+
         # tensor to store top k previous words at each step; now they're just <start>
         k_prev_words = torch.LongTensor([[word_map['<start>']]] * k).to(device)  # (k, 1)
         # tensor to store top k sequences; now they're just <start>
@@ -407,7 +407,7 @@ class Decoder(nn.Module):
         complete_seqs_alpha = list()
 
         # tensor to store the top k sequences' betas; now they're just 1
-        seqs_beta = torch.ones(k, 1, 1).to(device) 
+        seqs_beta = torch.ones(k, 1, 1).to(device)
         # lists to store completed sequences' betas
         complete_seqs_beta = list()
 
@@ -420,13 +420,13 @@ class Decoder(nn.Module):
         while True:
 
             embeddings = self.embedding(k_prev_words).squeeze(1)  # (s, embed_dim)
-            
+
             # input of LSTM1: [ h_last^2; w_t; v^g ]
             x1 = torch.cat((h2, torch.cat((embeddings, global_image.expand_as(embeddings)), dim = 1)), dim = 1)  # (s, embed_dim * 2 + decoder_dim)
 
             # LSTM1
             h1, c1, s = self.LSTM1(x1, (h1, c1))  # (s, decoder_dim)
-            
+
             # adaptive attention network
             att_output, alpha, beta = self.adaptive_attention(spatial_feature, h1, s)  # (s, decoder_dim), (s, num_pixels), (s, 1)
 
@@ -434,14 +434,14 @@ class Decoder(nn.Module):
 
             # input of LSTM2: ([ c_t; h_t^1 ])
             x2 = torch.cat((att_output, h1), dim = 1)  # (s, decoder_dim * 2)
-            
+
             # LSTM2
             h2, c2 = self.LSTM2(x2, (h2, c2))  # (s, decoder_dim)
 
             # calc word probability over vocabulary
             scores = self.fc(h2)  # (batch_size, vocab_size)
             scores = F.log_softmax(scores, dim = 1)  # (s, vocab_size)
-            
+
             # record score
             # (k, 1) will be expanded to (k, vocab_size), then (k, vocab_size) + (s, vocab_size) --> (s, vocab_size)
             scores = top_k_scores.expand_as(scores) + scores  # (s, vocab_size)
@@ -456,7 +456,7 @@ class Decoder(nn.Module):
             # convert unrolled indices to actual indices of scores
             prev_word_inds = top_k_words / vocab_size  # (s)
             next_word_inds = top_k_words % vocab_size  # (s)
-            
+
             # add new words, alphas and betas to sequences
             seqs = torch.cat([seqs[prev_word_inds], next_word_inds.unsqueeze(1)], dim = 1) # (s, step+1)
             seqs_alpha = torch.cat([seqs_alpha[prev_word_inds], alpha[prev_word_inds].unsqueeze(1)], dim = 1)  # (s, step+1, enc_image_size, enc_image_size)
@@ -465,18 +465,18 @@ class Decoder(nn.Module):
             # which sequences are incomplete (didn't reach <end>)?
             incomplete_inds = [ind for ind, next_word in enumerate(next_word_inds) if next_word != word_map['<end>']]
             complete_inds = list(set(range(len(next_word_inds))) - set(incomplete_inds))
-            
+
             # set aside complete sequences
             if len(complete_inds) > 0:
                 complete_seqs.extend(seqs[complete_inds].tolist())
                 complete_seqs_scores.extend(top_k_scores[complete_inds])
                 complete_seqs_alpha.extend(seqs_alpha[complete_inds].tolist())
-                complete_seqs_beta.extend(seqs_beta[complete_inds])   
+                complete_seqs_beta.extend(seqs_beta[complete_inds])
 
             k -= len(complete_inds)  # reduce beam length accordingly
             if k == 0:
                 break
-            
+
             # proceed with incomplete sequences
             seqs = seqs[incomplete_inds]
             seqs_alpha = seqs_alpha[incomplete_inds]
@@ -491,10 +491,10 @@ class Decoder(nn.Module):
             if step > 50:
                 break
             step += 1
-            
+
         i = complete_seqs_scores.index(max(complete_seqs_scores))
         seq = complete_seqs[i]
         alphas = complete_seqs_alpha[i]
-        
+
         betas = complete_seqs_beta[i]
         return seq, alphas, betas

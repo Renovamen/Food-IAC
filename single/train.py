@@ -25,7 +25,7 @@ def set_trainer():
     word_map_file = os.path.join(data_folder, 'wordmap_' + data_name + '.json')
     with open(word_map_file, 'r') as j:
         word_map = json.load(j)
-    
+
     # create id2word map
     rev_word_map = {v: k for k, v in word_map.items()}
 
@@ -34,12 +34,12 @@ def set_trainer():
         start_epoch = 0
         epochs_since_improvement = 0
         best_bleu4 = 0.
-        
+
         # ------------- word embeddings -------------
         if config.embed_pretrain == True:
             # load pre-trained word embeddings for words in the word map
             embeddings, embed_dim = load_embeddings(
-                emb_file = config.embed_path, 
+                emb_file = config.embed_path,
                 word_map = word_map,
                 output_folder = config.dataset_output_path,
                 output_basename = config.dataset_basename
@@ -60,7 +60,7 @@ def set_trainer():
             )
         else:
             encoder_optimizer = None
-            
+
         # ----------------- decoder ------------------
         decoder = models.set_decoder(
             vocab_size = len(word_map),
@@ -82,13 +82,13 @@ def set_trainer():
 
     # or load checkpoint
     else:
-        encoder, 
-        encoder_optimizer, 
-        decoder, 
-        decoder_optimizer, 
-        start_epoch, 
-        epochs_since_improvement, 
-        best_bleu4 
+        encoder,
+        encoder_optimizer,
+        decoder,
+        decoder_optimizer,
+        start_epoch,
+        epochs_since_improvement,
+        best_bleu4
 
     # move to GPU, if available
     decoder = decoder.to(device)
@@ -104,22 +104,22 @@ def set_trainer():
     )
     train_loader = torch.utils.data.DataLoader(
         CaptionDataset(
-            data_folder, data_name, 'train', 
+            data_folder, data_name, 'train',
             transform = transforms.Compose([normalize])
         ),
-        batch_size = config.batch_size, 
-        shuffle = True, 
-        num_workers = config.workers, 
+        batch_size = config.batch_size,
+        shuffle = True,
+        num_workers = config.workers,
         pin_memory = True
     )
     val_loader = torch.utils.data.DataLoader(
         CaptionDataset(
-            data_folder, data_name, 'val', 
+            data_folder, data_name, 'val',
             transform = transforms.Compose([normalize])
         ),
-        batch_size = config.batch_size, 
-        shuffle = True, 
-        num_workers = config.workers, 
+        batch_size = config.batch_size,
+        shuffle = True,
+        num_workers = config.workers,
         pin_memory = True
     )
 
@@ -128,19 +128,19 @@ def set_trainer():
         device = device,
         word_map = word_map,
         rev_word_map = rev_word_map,
-        start_epoch = start_epoch, 
-        epochs_since_improvement = epochs_since_improvement, 
+        start_epoch = start_epoch,
+        epochs_since_improvement = epochs_since_improvement,
         best_bleu4 = best_bleu4,
-        train_loader = train_loader, 
-        val_loader = val_loader, 
-        encoder = encoder, 
-        decoder = decoder, 
-        encoder_optimizer = encoder_optimizer, 
+        train_loader = train_loader,
+        val_loader = val_loader,
+        encoder = encoder,
+        decoder = decoder,
+        encoder_optimizer = encoder_optimizer,
         decoder_optimizer = decoder_optimizer,
         loss_function = loss_function,
         grad_clip = config.grad_clip,
         fine_tune_encoder = config.fine_tune_encoder,
-        tensorboard = config.tensorboard, 
+        tensorboard = config.tensorboard,
         log_dir = config.log_dir
     )
 
@@ -148,6 +148,5 @@ def set_trainer():
 
 
 if __name__ == '__main__':
-
     trainer = set_trainer()
     trainer.run_train()

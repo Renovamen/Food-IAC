@@ -31,10 +31,10 @@ class ResNet101(nn.Module):
         '''
         input params:
             images: input image(batch_size, 3, image_size = 256, image_size = 256)
-        return: 
+        return:
             feature_map: feature map after resized (batch_size, 2048, encoded_image_size = 7, encoded_image_size = 7)
         '''
-        
+
         feature_map = self.resnet(images)  # (batch_size, 2048, image_size/32, image_size/32)
         feature_map = self.adaptive_pool(feature_map)  # (batch_size, 2048, encoded_image_size = 7, encoded_image_size = 7)
         return feature_map
@@ -68,7 +68,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.CNN = ResNet101(encoded_image_size)
         self.avg_pool = nn.AvgPool2d(
-            kernel_size = encoded_image_size, 
+            kernel_size = encoded_image_size,
             stride = encoded_image_size
         )
         self.global_mapping = nn.Sequential(
@@ -88,18 +88,18 @@ class Encoder(nn.Module):
         '''
         input params:
             images: input image (batch_size, 3, image_size = 256, image_size = 256)
-        return: 
+        return:
             feature_map: orignal feature map of the image
             spatial_feature: spatial image feature (batch_size, num_pixels, decoder_dim)
             global_feature: global image feature (batch_size, embed_dim)
         '''
 
         feature_map = self.CNN(images)  # (batch_size, 2048, encoded_image_size = 7, encoded_image_size = 7)
-        
+
         batch_size = feature_map.shape[0]
         encoder_dim = feature_map.shape[1]  # 2048
         num_pixels = feature_map.shape[2] * feature_map.shape[3]  # encoded_image_size * encoded_image_size = 49
-    
+
         global_feature = self.avg_pool(feature_map).view(batch_size, -1)  # a^g: (batch_size, 2048)
         # global image feature, eq.16: v^g = ReLU(W_b * a^g)
         global_feature = self.global_mapping(global_feature)  # (batch_size, embed_dim = 512)
@@ -107,7 +107,7 @@ class Encoder(nn.Module):
         feature_map = feature_map.permute(0, 2, 3, 1)  # (batch_size, encoded_image_size = 7, encoded_image_size = 7, 2048)
         # A = [ a_1, a_2, ..., a_num_pixels ]
         feature_map = feature_map.view(batch_size, num_pixels, encoder_dim)  # (batch_size, num_pixels = 49, 2048)
-       
+
         # spatial image feature: V = [ v_1, v_2, ..., v_num_pixels ]
         # eq.15: v_i = ReLU(W_a * a_i)
         spatial_feature = self.spatial_mapping(feature_map)  # (batch_size, num_pixels = 49, decoder_dim = 512)

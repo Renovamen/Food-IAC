@@ -16,15 +16,15 @@ class Metrics:
 
     def __init__(self, references, candidates, rev_word_map):
         corpus = setup_corpus(references, candidates, rev_word_map)
-        self.ref_sentence = corpus[0] 
-        self.hypo_sentence = corpus[1] 
+        self.ref_sentence = corpus[0]
+        self.hypo_sentence = corpus[1]
 
     def belu(self):
         '''
         compute BLEU scores
         return:
             BLEU-1(float), BLEU-2(float), BLEU-3(float), BLEU-4(float)
-        ''' 
+        '''
 
         bleu_score = bleu.Bleu().compute_score(self.ref_sentence, self.hypo_sentence)
         return bleu_score[0][0], bleu_score[0][0], bleu_score[0][2], bleu_score[0][3]
@@ -33,7 +33,7 @@ class Metrics:
         '''
         compute CIDEr scores
         return: CIDEr(float)
-        ''' 
+        '''
 
         cider_score = cider.Cider().compute_score(self.ref_sentence, self.hypo_sentence)
         return cider_score[0]
@@ -42,7 +42,7 @@ class Metrics:
         '''
         compute CIDEr scores
         return: ROUGE-L(float)
-        ''' 
+        '''
 
         rouge_score = rouge.Rouge().compute_score(self.ref_sentence, self.hypo_sentence)
         return rouge_score[0]
@@ -63,7 +63,7 @@ class Metrics:
             BLEU-1(float), BLEU-2(float), BLEU-3(float), BLEU-4(float),
             CIDEr(float), ROUGE-L(float), METEOR(float)
         '''
-        
+
         return self.belu(), self.cider(), self.rouge(), self.meteor()
 
 
@@ -79,7 +79,7 @@ def setup_corpus(references, candidates, rev_word_map):
         for cap in each_image:
             sentence = [rev_word_map[ix] for ix in cap]
             cur_ref_sentence.append(' '.join(sentence))
-        
+
         ref_sentence.append(cur_ref_sentence)
 
         # predictions

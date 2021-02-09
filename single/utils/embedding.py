@@ -24,10 +24,10 @@ def load_embeddings(emb_file, word_map, output_folder, output_basename):
         output_folder: path of the folder to store output files
         output_basename: basename for output files
 
-    return: 
+    return:
         embeddings in the same order as the words in the word map, dimension of embeddings
     '''
-    
+
     emb_basename = os.path.basename(emb_file)
     cache_path = os.path.join(output_folder, emb_basename + '_' + output_basename + '.pth.tar')
 
@@ -56,11 +56,11 @@ def load_embeddings(emb_file, word_map, output_folder, output_basename):
                 continue
 
             embeddings[word_map[emb_word]] = torch.FloatTensor(embedding)
-        
+
         # create cache file so we can load it quicker the next time
         print('Saving vectors to {}'.format(cache_path))
         torch.save((embeddings, embed_dim), cache_path)
-    
+
     # load embeddings from cache
     else:
         print('Loading embeddings from {}'.format(cache_path))

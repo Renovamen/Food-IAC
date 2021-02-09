@@ -33,20 +33,20 @@ tokenizer = RegexpTokenizer(r'\w+\S*\w*')
 lemmatizer = WordNetLemmatizer()
 stop = set(stopwords.words('english'))
 # bad_word_list = [
-#     'challenge', 'challenges', 'dpc', 'dpchallenge', 
-#     'congrats', 'congratulations', 'congratulation', 
+#     'challenge', 'challenges', 'dpc', 'dpchallenge',
+#     'congrats', 'congratulations', 'congratulation',
 #     'award', 'awards', 'ribbon', 'ribbons',
 #     'title', 'titles',
-#     'score', 'scores','scored', 'rating', 
+#     'score', 'scores','scored', 'rating',
 #     'comment', 'comments', 'commented', 'critique',
 #     'favorites', 'favorite', 'fav',
-#     'thanks', 'thank', 
-#     'vote', 'voting', 'votes', 'voters', 'voter', 'voted', 
+#     'thanks', 'thank',
+#     'vote', 'voting', 'votes', 'voters', 'voter', 'voted',
 #     'entry', 'entries', 'luck', 'theme'
 # ]
 bad_word_list = [
-    'congrats', 'congratulations', 'congratulation', 
-    'award', 'awards', 'ribbon', 'ribbons', 
+    'congrats', 'congratulations', 'congratulation',
+    'award', 'awards', 'ribbon', 'ribbons',
     "\\u00" # captions with this char must include non-english words
 ]
 replace_word_map = {
@@ -70,9 +70,9 @@ def basic_clean(cap):
     remove_digits = str.maketrans('', '', digits)
     no_digit = low_cap.translate(remove_digits)
     # remove punctions
-    no_punction = re.sub(r"[^\w\d'\s]+", ' ', no_digit)   
+    no_punction = re.sub(r"[^\w\d'\s]+", ' ', no_digit)
 
-    tokens = tokenizer.tokenize(no_punction)  
+    tokens = tokenizer.tokenize(no_punction)
     return ' '.join(w for w in tokens)#, tokens
 
 
@@ -101,7 +101,7 @@ def lemmatize(token_pos):
     elif token_pos[1].startswith('V'):
         return (lemmatizer.lemmatize(token_pos[0], wordnet.VERB), token_pos[1])
     elif token_pos[1].startswith('J'):
-        return (lemmatizer.lemmatize(token_pos[0], wordnet.ADJ), token_pos[1])        
+        return (lemmatizer.lemmatize(token_pos[0], wordnet.ADJ), token_pos[1])
     elif token_pos[1].startswith('R'):
         return (lemmatizer.lemmatize(token_pos[0], wordnet.ADV), token_pos[1])
     else:
@@ -141,7 +141,7 @@ def update_bigram_freq(bigram):
            bigram_dict[bigram_word] += 1
         except KeyError as e:
             bigram_dict[bigram_word] = 1
-        return True        
+        return True
     else:
         return False
 
@@ -172,7 +172,7 @@ def tf_idf(cap):
         unigram_score *= unigram_score_list[unigram[0]]
     for bigram in cap['bigrams']:
         bigram_score *= bigram_score_list[bigram[0][0] + '_' + bigram[1][0]]
-    
+
     info_score = -np.log(unigram_score * bigram_score)/2
 
     print(info_score, cap['clean'])
@@ -188,7 +188,7 @@ def tf_idf(cap):
 
     # print("{:0.1e}".format(bigram_score),
     #         "{:0.1e}".format(unigram_score),
-    #         "{:0.1f}".format(info_score), 
+    #         "{:0.1f}".format(info_score),
     #         cap['clean'])
 
     return final_flag
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     # record num of images and captions before cleaning
     raw_imgs = len(raw_data)
     raw_caps = np.sum([len(raw_data[imgID]["comments"]) for imgID in raw_data])
-    
+
     image_list = []
 
     # clean
@@ -213,7 +213,7 @@ if __name__ == '__main__':
         img["sentences"] = []
 
         for cap in raw_data[imgID]["comments"]:
-            
+
             # lowercase, remove digits and punctions
             basic_clean_cap = basic_clean(cap)
             # for example: niceeeeeee -> nice
@@ -234,7 +234,7 @@ if __name__ == '__main__':
             # ignore meaningless captions
             if len(unigram_list) == 0 or len(bigram_list) == 0:
                 continue
-            
+
             sentence = {}
             # sentence['raw'] = cap # raw caption
             sentence['clean'] = reduced_cap # cleaned caption
@@ -244,7 +244,7 @@ if __name__ == '__main__':
             sentence['bigrams'] = bigram_list
 
             img["sentences"].append(sentence)
-        
+
 
         img["filename"] = imgID # filename of image
         img["url"] = raw_data[imgID]["image_url"] # download url of image
@@ -277,7 +277,7 @@ if __name__ == '__main__':
         # remove images with no captions
         if(len(img["sentences"]) > 0):
             clean_data["images"].append(img)
-    
+
 
     # record num of images and captions after cleaning
     clean_imgs = len(clean_data["images"])

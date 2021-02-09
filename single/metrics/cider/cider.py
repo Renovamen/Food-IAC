@@ -15,11 +15,11 @@ class Cider:
     def compute_score(self, reference, hypothesis):
         '''
         main function to compute CIDEr score
-        
+
         input params:
             reference(list): reference sentences ([[ref1a, ref1b, ref1c], ..., [refna, refnb]])
             hypothesis(list): predicted sentences ([[hypo1], [hypo2], ..., [hypon]])
-        return: 
+        return:
             cider(float): computed CIDEr score for the corpus
         '''
 

@@ -25,7 +25,7 @@ def cap_num(image_list):
     total = len(image_list)
     train = val = test = 0
     train_cap = val_cap = test_cap = 0
-    
+
     for img in image_list:
 
         total_images.update([img['filename']])
@@ -46,7 +46,7 @@ def cap_num(image_list):
 
 def dict_size(image_list, min_word_freq = 5):
     word_freq = Counter()
-    
+
     # recore frequence of each word
     [word_freq.update(cap['tokens']) for img in image_list for cap in img['sentences']]
     [total_word_freq.update(cap['tokens']) for img in image_list for cap in img['sentences']]
@@ -68,9 +68,9 @@ if __name__ == '__main__':
         with open(path, 'r', encoding = 'utf-8') as f:
             image_list = json.load(f)['images']
             f.close()
-        
+
         print('\n----------- ', item, ' -----------')
-        
+
         total, train, val, test, total_cap, train_cap, val_cap, test_cap = cap_num(image_list)
         print('Number of images: Total: %d, Train: %d, Val: %d, Test: %d' % (total, train, val, test))
         print('Number of captions: Total: %d, Train: %d, Val: %d, Test: %d' % (total_cap, train_cap, val_cap, test_cap))
@@ -81,9 +81,9 @@ if __name__ == '__main__':
         for img in image_list:
             for cap in img['sentences']:
                 word_cnt = word_cnt + len(cap['tokens'])
-        
+
         print('Word count:', word_cnt)
-    
+
     print('\n----------- Total -----------')
 
     total_word_num = len(total_word_freq)

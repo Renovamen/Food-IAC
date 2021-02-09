@@ -14,7 +14,7 @@ class Bleu:
     def compute_score(self, reference, hypothesis):
         '''
         main function to compute BLEU score
-        
+
         input params:
             reference(list): reference sentences ([[ref1a, ref1b, ref1c], ..., [refna, refnb]])
             hypothesis(list): predicted sentences ([[hypo1], [hypo2], ..., [hypon]])

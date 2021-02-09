@@ -44,7 +44,7 @@ def split_indice(img_num):
     # calc number of images in each set
     train_num = int(img_num * 6 / 8)
     val_num = test_num = int(img_num * 1 / 8)
-    
+
     # split indices
     split_indice = np.arange(img_num)
     np.random.shuffle(split_indice) # shuffle all indices
@@ -79,7 +79,7 @@ if __name__ == '__main__':
                 img['split'] = 'val'
             else:
                 img['split'] = 'test'
-            
+
             split_cap_list = []
             for cap in img['sentences']:
                 new_cap = {} # current caption with it tokens
@@ -91,10 +91,10 @@ if __name__ == '__main__':
                     new_cap['raw'] = cap
                     new_cap['tokens'] = tokenizer.tokenize(cap)
                 split_cap_list.append(new_cap)
-            
+
             img['sentences'] = split_cap_list
             split_image_list.append(img)
-            
+
         split_data = {}
         split_data['images'] = split_image_list
 

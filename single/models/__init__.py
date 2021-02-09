@@ -31,7 +31,7 @@ input params:
 '''
 def set_encoder(embed_dim):
     model = Encoder(
-        decoder_dim = config.decoder_dim, 
+        decoder_dim = config.decoder_dim,
         embed_dim = embed_dim
     )
     return model

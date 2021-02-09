@@ -49,7 +49,7 @@ class Meteor:
 
         # Send to METEOR
         self.meteor_p.stdin.write(eval_line + '\n')
-        
+
         # Collect segment scores
         for i in range(0, len(hypothesis)):
             score = float(self.meteor_p.stdout.readline().strip())
