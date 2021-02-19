@@ -21,6 +21,7 @@ def visualize_att_beta(image_path, seq, alphas, rev_word_map, betas, smooth = Tr
     image = image.resize([14 * 24, 14 * 24], Image.LANCZOS)
 
     words = [rev_word_map[ind] for ind in seq]
+    print(" ".join(words[1:-1]))
 
     # subplot settings
     num_col = len(words) - 1

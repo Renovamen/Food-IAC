@@ -8,8 +8,8 @@ import torch.optim
 import torch.utils.data
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from nltk.translate.bleu_score import corpus_bleu
 from tqdm import tqdm
+
 from config import config
 from utils.dataloader import *
 from utils.common import *
@@ -116,7 +116,6 @@ def evaluate(beam_size):
 
 
 if __name__ == '__main__':
-
     beam_size = 5
 
     (bleu1, bleu2, bleu3, bleu4), cider, rouge, meteor = evaluate(beam_size)

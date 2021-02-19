@@ -23,7 +23,7 @@ input params:
     resized_size(int): size of the image after resized
 '''
 
-def data_preprocess(karpathy_json_path, image_folder, captions_per_image, 
+def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
                     min_word_freq, output_folder, max_len = 100, resized_size = 256):
 
     # load Karpathy JSON
@@ -39,7 +39,7 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
 
     test_image_paths = []
     test_image_captions = []
-    
+
     word_freq = Counter()
 
     for img in data['images']:
@@ -56,22 +56,19 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
 
         path = os.path.join(image_folder, img['filename']) # path of current image
 
-        # if img['split'] in {'train', 'restval'}:
-        #     train_image_paths.append(path)
-        #     train_image_captions.append(captions)
-        # elif img['split'] in {'val'}:
-        #     val_image_paths.append(path)
-        #     val_image_captions.append(captions)
-        # elif img['split'] in {'test'}:
-        #     test_image_paths.append(path)
-        #     test_image_captions.append(captions)
-        if img['split'] in {'test'}:
+        if img['split'] in {'train', 'restval'}:
+            train_image_paths.append(path)
+            train_image_captions.append(captions)
+        elif img['split'] in {'val'}:
+            val_image_paths.append(path)
+            val_image_captions.append(captions)
+        elif img['split'] in {'test'}:
             test_image_paths.append(path)
             test_image_captions.append(captions)
 
     # sanity check
-    # assert len(train_image_paths) == len(train_image_captions)
-    # assert len(val_image_paths) == len(val_image_captions)
+    assert len(train_image_paths) == len(train_image_captions)
+    assert len(val_image_paths) == len(val_image_captions)
     assert len(test_image_paths) == len(test_image_captions)
 
     # create word map (word2id)
@@ -92,9 +89,10 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
     # sample captions for each image, save images to HDF5 file, and captions and their lengths to JSON files
     seed(123)
     for impaths, imcaps, split in [
-        # (train_image_paths, train_image_captions, 'train'),
-                                #    (val_image_paths, val_image_captions, 'val'),
-                                   (test_image_paths, test_image_captions, 'test')]:
+        (train_image_paths, train_image_captions, 'train'),
+        (val_image_paths, val_image_captions, 'val'),
+        (test_image_paths, test_image_captions, 'test')
+    ]:
 
         with h5py.File(os.path.join(output_folder, split + '_images_' + base_filename + '.hdf5'), 'a') as h:
             # make a note of the number of captions that are sampled per image
@@ -139,7 +137,6 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
                 images[i] = img
 
                 for j, c in enumerate(captions):
-
                     # one-hot encoding and pad the caption to fit max_len
                     enc_c = [word_map['<start>']] + [word_map.get(word, word_map['<unk>']) for word in c] + [
                         word_map['<end>']] + [word_map['<pad>']] * (max_len - len(c))
@@ -164,7 +161,6 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
 
 
 if __name__ == '__main__':
-
     # create input files (along with word map)
     data_preprocess(
         karpathy_json_path = config.dataset_caption_path,

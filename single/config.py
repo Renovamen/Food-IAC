@@ -7,13 +7,13 @@ import os
 class config:
 
     # global parameters
-    base_path = '/Users/zou/Renovamen/Developing/Food-IAC'  # path of this project
+    base_path = '/Users/zou/Renovamen/Developing/Food-IAC'  # path to this project
 
     # dataset parameters
     dataset_image_path = os.path.join(base_path, 'data/images/')
-    dataset_caption_path = os.path.join(base_path, 'data/final/dof_and_focus.json')
+    dataset_caption_path = os.path.join(base_path, 'data/test.json')
     dataset_output_path = os.path.join(base_path, 'outputs/')  # folder with data files saved by preprocess.py
-    dataset_basename = 'fiac'  # any name you want
+    dataset_basename = 'fiac_test'  # any name you want
 
     # preprocess parameters
     captions_per_image = 5
@@ -35,7 +35,7 @@ class config:
     decoder_dim = 512  # dimension of decoder's hidden layer
     dropout = 0.5
     model_path = os.path.join(base_path, 'checkpoints/')  # path to save checkpoints
-    model_basename = 'single_dof'  # any name you want
+    model_basename = 'single_color_test'  # any name you want
 
     # training parameters
     epochs = 20

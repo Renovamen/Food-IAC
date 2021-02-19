@@ -3,6 +3,7 @@
 /outputs/
 /checkpoints/
 /logs/
+data.tar.bz2
 
 # Editors
 .vscode/

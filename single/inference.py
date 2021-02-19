@@ -1,29 +1,32 @@
+import os
+import json
 import torch
 import torch.nn.functional as F
 import numpy as np
-import json
 import torchvision.transforms as transforms
-# from scipy.misc import imread, imresize
 from imageio import imread
 from PIL import Image
+
 from utils.visual import *
+from config import config
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-'''
-read an image and caption it with beam search
 
-input params:
-    encoder: encoder model
-    decoder: decoder model
-    image_path: path to image
-    word_map: word map
-    beam_size: number of sequences to consider at each decode-step
-return:
-    seq: caption
-    alphas: weights for visualization
-'''
 def generate_caption(encoder, decoder, image_path, word_map, beam_size = 3):
+    '''
+    read an image and caption it with beam search
+
+    input params:
+        encoder: encoder model
+        decoder: decoder model
+        image_path: path to image
+        word_map: word map
+        beam_size: number of sequences to consider at each decode-step
+    return:
+        seq: caption
+        alphas: weights for visualization
+    '''
 
     # Read image and process
     img = imread(image_path)
@@ -52,15 +55,14 @@ def generate_caption(encoder, decoder, image_path, word_map, beam_size = 3):
 
 
 if __name__ == '__main__':
-
-    model_path = '../checkpoints/checkpoint_single.pth.tar'
-    img = '../data/images/1162234.jpg'
-    wordmap_path = '../outputs/wordmap_fiac.json'
+    model_path = os.path.join(config.model_path, 'checkpoint_single_color.pth.tar')
+    img = os.path.join(config.dataset_image_path, '179146.jpg')
+    wordmap_path = os.path.join(config.dataset_output_path, 'wordmap_fiac.json')
     beam_size = 5
     ifsmooth = False
 
     # load model
-    checkpoint = torch.load(model_path, map_location = str(device))
+    checkpoint = torch.load(model_path, map_location=str(device))
 
     decoder = checkpoint['decoder']
     decoder = decoder.to(device)

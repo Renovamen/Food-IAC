@@ -481,8 +481,10 @@ class Decoder(nn.Module):
             seqs = seqs[incomplete_inds]
             seqs_alpha = seqs_alpha[incomplete_inds]
             seqs_beta = seqs_beta[incomplete_inds]
-            h = h[prev_word_inds[incomplete_inds]]
-            c = c[prev_word_inds[incomplete_inds]]
+            h1 = h1[prev_word_inds[incomplete_inds]]
+            c1 = c1[prev_word_inds[incomplete_inds]]
+            h2 = h2[prev_word_inds[incomplete_inds]]
+            c2 = c2[prev_word_inds[incomplete_inds]]
             spatial_feature = spatial_feature[prev_word_inds[incomplete_inds]]
             top_k_scores = top_k_scores[incomplete_inds].unsqueeze(1)
             k_prev_words = next_word_inds[incomplete_inds].unsqueeze(1)
