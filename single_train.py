@@ -3,17 +3,17 @@ import torch.optim
 import torch.utils.data
 import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
-import models
-from training.trainer import Trainer
-from utils.dataloader import *
-from utils.common import *
-from utils.embedding import *
+
+from src.single.models import *
+from src.single.training import Trainer
+from src.single.utils import *
+from src.utils import *
+
 from config import config
 
 cudnn.benchmark = True  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
 def set_trainer():
-
     # data parameters
     data_folder = config.dataset_output_path
     data_name = config.dataset_basename
@@ -22,9 +22,7 @@ def set_trainer():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # load word2id map
-    word_map_file = os.path.join(data_folder, 'wordmap_' + data_name + '.json')
-    with open(word_map_file, 'r') as j:
-        word_map = json.load(j)
+    word_map = load_wordmap(data_folder, data_name)
 
     # create id2word map
     rev_word_map = {v: k for k, v in word_map.items()}
@@ -36,21 +34,18 @@ def set_trainer():
         best_bleu4 = 0.
 
         # ------------- word embeddings -------------
-        if config.embed_pretrain == True:
-            # load pre-trained word embeddings for words in the word map
-            embeddings, embed_dim = load_embeddings(
-                emb_file = config.embed_path,
-                word_map = word_map,
-                output_folder = config.dataset_output_path,
-                output_basename = config.dataset_basename
-            )
-        else:
-            # or initialize embedding weights randomly
-            embeddings = None
-            embed_dim = config.embed_dim
+        embeddings, embed_dim = load_embeddings(
+            emb_file = config.embed_path,
+            word_map = word_map,
+            output_folder = config.dataset_output_path,
+            output_basename = config.dataset_basename
+        )
 
         # ----------------- encoder ------------------
-        encoder = models.set_encoder(embed_dim = embed_dim)
+        encoder = Encoder(
+            decoder_dim = config.decoder_dim,
+            embed_dim = embed_dim
+        )
         encoder.CNN.fine_tune(config.fine_tune_encoder)
         # optimizer for encoder's CNN (if fine-tune)
         if config.fine_tune_encoder:
@@ -62,16 +57,17 @@ def set_trainer():
             encoder_optimizer = None
 
         # ----------------- decoder ------------------
-        decoder = models.set_decoder(
-            vocab_size = len(word_map),
+        decoder = Decoder(
             embed_dim = embed_dim,
-            embeddings = embeddings
+            embeddings = embeddings,
+            fine_tune = config.fine_tune_embeddings,
+            attention_dim = config.attention_dim,
+            decoder_dim = config.decoder_dim,
+            vocab_size = len(word_map),
+            dropout = config.dropout
         )
         # optimizer for decoder
-
-        # print(len(list(decoder.parameters())))
         decoder_params = list(filter(lambda p: p.requires_grad, decoder.parameters()))
-        # print(len(decoder_params))
         decoder_params = decoder_params + list(encoder.global_mapping.parameters()) \
                                         + list(encoder.spatial_mapping.parameters())
 
@@ -97,11 +93,13 @@ def set_trainer():
     # loss function (cross entropy)
     loss_function = nn.CrossEntropyLoss().to(device)
 
-    # custom dataloaders
+    # image transform
     normalize = transforms.Normalize(
         mean = [0.485, 0.456, 0.406],
         std = [0.229, 0.224, 0.225]
     )
+
+    # dataloaders
     train_loader = torch.utils.data.DataLoader(
         CaptionDataset(
             data_folder, data_name, 'train',

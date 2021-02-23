@@ -138,8 +138,8 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
 
                 for j, c in enumerate(captions):
                     # one-hot encoding and pad the caption to fit max_len
-                    enc_c = [word_map['<start>']] + [word_map.get(word, word_map['<unk>']) for word in c] + [
-                        word_map['<end>']] + [word_map['<pad>']] * (max_len - len(c))
+                    enc_c = [word_map['<start>']] + [word_map.get(word, word_map['<unk>']) for word in c] +\
+                            [word_map['<end>']] + [word_map['<pad>']] * (max_len - len(c))
 
                     # length of caption without padding (with '<start>' and '<end>')
                     c_len = len(c) + 2

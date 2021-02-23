@@ -400,16 +400,17 @@ class Decoder(nn.Module):
         top_k_scores = torch.zeros(k, 1).to(device)  # (k, 1)
         # tensor to store top k sequences' alphas; now they're just 1
         seqs_alpha = torch.ones(k, 1, enc_image_size, enc_image_size).to(device)  # (k, 1, enc_image_size, enc_image_size)
+        # tensor to store the top k sequences' betas; now they're just 1
+        seqs_beta = torch.ones(k, 1, 1).to(device)
+        # tensor to store the top k sequences' hidden states (LSTM-2); now they're just 0
+        seqs_hidden = torch.zeros(k, 1, decoder_dim).to(device)
 
-        # lists to store completed sequences, their alphas and scores
+        # lists to store completed sequences, their alphas, betas and scores
         complete_seqs = list()
         complete_seqs_scores = list()
         complete_seqs_alpha = list()
-
-        # tensor to store the top k sequences' betas; now they're just 1
-        seqs_beta = torch.ones(k, 1, 1).to(device)
-        # lists to store completed sequences' betas
         complete_seqs_beta = list()
+        complete_seqs_hidden = list()
 
         # start decoding
         step = 1
@@ -457,10 +458,11 @@ class Decoder(nn.Module):
             prev_word_inds = top_k_words / vocab_size  # (s)
             next_word_inds = top_k_words % vocab_size  # (s)
 
-            # add new words, alphas and betas to sequences
-            seqs = torch.cat([seqs[prev_word_inds], next_word_inds.unsqueeze(1)], dim = 1) # (s, step+1)
-            seqs_alpha = torch.cat([seqs_alpha[prev_word_inds], alpha[prev_word_inds].unsqueeze(1)], dim = 1)  # (s, step+1, enc_image_size, enc_image_size)
+            # add new words, alphas, betas and hidden states to sequences
+            seqs = torch.cat([seqs[prev_word_inds], next_word_inds.unsqueeze(1)], dim = 1) # (s, step + 1)
+            seqs_alpha = torch.cat([seqs_alpha[prev_word_inds], alpha[prev_word_inds].unsqueeze(1)], dim = 1)  # (s, step + 1, enc_image_size, enc_image_size)
             seqs_beta = torch.cat([seqs_beta[prev_word_inds], beta[prev_word_inds].unsqueeze(1)], dim = 1)  # (s, step + 1, 1)
+            seqs_hidden = torch.cat([seqs_hidden[prev_word_inds], h2[prev_word_inds].detach().unsqueeze(1)], dim = 1)  # (s, step + 1, decoder_dim)
 
             # which sequences are incomplete (didn't reach <end>)?
             incomplete_inds = [ind for ind, next_word in enumerate(next_word_inds) if next_word != word_map['<end>']]
@@ -472,6 +474,10 @@ class Decoder(nn.Module):
                 complete_seqs_scores.extend(top_k_scores[complete_inds])
                 complete_seqs_alpha.extend(seqs_alpha[complete_inds].tolist())
                 complete_seqs_beta.extend(seqs_beta[complete_inds])
+                complete_seqs_hidden.extend(seqs_hidden[complete_inds])
+                # print('-------------- in ---------------')
+                # print(top_k_scores)
+                # print(complete_seqs_scores)
 
             k -= len(complete_inds)  # reduce beam length accordingly
             if k == 0:
@@ -481,6 +487,7 @@ class Decoder(nn.Module):
             seqs = seqs[incomplete_inds]
             seqs_alpha = seqs_alpha[incomplete_inds]
             seqs_beta = seqs_beta[incomplete_inds]
+            seqs_hidden = seqs_hidden[incomplete_inds]
             h1 = h1[prev_word_inds[incomplete_inds]]
             c1 = c1[prev_word_inds[incomplete_inds]]
             h2 = h2[prev_word_inds[incomplete_inds]]
@@ -491,12 +498,22 @@ class Decoder(nn.Module):
 
             # break if things have been going on too long
             if step > 50:
+                complete_seqs.extend(seqs.tolist())
+                complete_seqs_scores.extend(top_k_scores)
+                complete_seqs_alpha.extend(seqs_alpha.tolist())
+                complete_seqs_beta.extend(seqs_beta)
+                complete_seqs_hidden.extend(seqs_hidden)
                 break
             step += 1
+
+        # print('-------------- out ---------------')
+        # print(top_k_scores)
+        # print(complete_seqs_scores)
 
         i = complete_seqs_scores.index(max(complete_seqs_scores))
         seq = complete_seqs[i]
         alphas = complete_seqs_alpha[i]
-
         betas = complete_seqs_beta[i]
-        return seq, alphas, betas
+        hiddens = complete_seqs_hidden[i]
+
+        return seq, alphas, betas, hiddens

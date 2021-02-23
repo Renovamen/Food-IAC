@@ -1,6 +1,5 @@
 '''
-Compute the correct BLEU, CIDEr, ROUGE and METEOR scores for a
-checkpoint on the val or test sets without Teacher Forcing.
+Run test on val or test set without Teacher Forcing.
 '''
 
 import torch.backends.cudnn as cudnn
@@ -10,10 +9,10 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from tqdm import tqdm
 
+from src.single.utils.dataloader import *
+from src.single.utils.common import *
+from src.metrics import Metrics
 from config import config
-from utils.dataloader import *
-from utils.common import *
-from metrics import Metrics
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
 cudnn.benchmark = True  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
@@ -23,7 +22,7 @@ data_folder = config.dataset_output_path  # folder with data files saved by prep
 data_name = config.dataset_basename  # base name shared by data files
 
 word_map_file = config.dataset_output_path + 'wordmap_' + data_name + '.json'  # word map, ensure it's the same the data was encoded with and the model was trained with
-checkpoint = config.model_path + 'best_checkpoint_' + config.model_basename + '.pth.tar'  # model checkpoint
+checkpoint = config.model_path + 'checkpoint_' + config.single_model_basename + '.pth.tar'  # model checkpoint
 
 
 # load model
@@ -40,8 +39,6 @@ encoder.eval()
 # load word map (word2ix)
 with open(word_map_file, 'r') as j:
     word_map = json.load(j)
-
-vocab_size = len(word_map)
 
 # create ix2word map
 rev_word_map = {v: k for k, v in word_map.items()}
@@ -101,7 +98,7 @@ def evaluate(beam_size):
         ground_truth.append(img_captions)
 
         # prediction (beam search)
-        seq, _, _ = decoder.beam_search(encoder_out, beam_size, word_map)
+        seq, _, _, _ = decoder.beam_search(encoder_out, beam_size, word_map)
 
         pred = [w for w in seq if w not in {word_map['<start>'], word_map['<end>'], word_map['<pad>']}]
         prediction.append(pred)

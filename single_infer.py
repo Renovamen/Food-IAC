@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from imageio import imread
 from PIL import Image
 
-from utils.visual import *
+from src.single.utils.visual import *
 from config import config
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -50,13 +50,13 @@ def generate_caption(encoder, decoder, image_path, word_map, beam_size = 3):
     encoder_out = encoder(image)  # (1, enc_image_size, enc_image_size, encoder_dim)
 
     # prediction (beam search)
-    seq, alphas, betas = decoder.beam_search(encoder_out, beam_size, word_map)
+    seq, alphas, betas, _ = decoder.beam_search(encoder_out, beam_size, word_map)
     return seq, alphas, betas
 
 
 if __name__ == '__main__':
     model_path = os.path.join(config.model_path, 'checkpoint_single_color.pth.tar')
-    img = os.path.join(config.dataset_image_path, '179146.jpg')
+    img = os.path.join(config.dataset_image_path, '742547.jpg')
     wordmap_path = os.path.join(config.dataset_output_path, 'wordmap_fiac.json')
     beam_size = 5
     ifsmooth = False

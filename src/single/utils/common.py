@@ -1,19 +1,28 @@
 import torch
 from config import config
 
-def save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer, decoder_optimizer, bleu4, is_best):
+def save_checkpoint(
+    epoch: int,
+    epochs_since_improvement: int,
+    encoder: torch.nn.Module,
+    decoder: torch.nn.Module,
+    encoder_optimizer: torch.optim.Optimizer,
+    decoder_optimizer: torch.optim.Optimizer,
+    bleu4: float,
+    is_best: bool
+):
     '''
     save model checkpoint
 
     input params:
-        epoch: epoch number the current checkpoint have been trained for
-        epochs_since_improvement: number of epochs since last improvement in BLEU-4 score
-        encoder: encoder model
-        decoder: decoder model
-        encoder_optimizer: optimizer to update encoder's weights, if fine-tuning
-        decoder_optimizer: optimizer to update decoder's weights
-        bleu4: validation BLEU-4 score for this epoch
-        is_best: is this checkpoint the best so far?
+        epoch (int): epoch number the current checkpoint have been trained for
+        epochs_since_improvement (int): number of epochs since last improvement in BLEU-4 score
+        encoder (nn.Module): encoder model
+        decoder (nn.Module): decoder model
+        encoder_optimizer (nn.Optimizer): optimizer to update encoder's weights, if fine-tuning
+        decoder_optimizer (nn.Optimizer): optimizer to update decoder's weights
+        bleu4 (float): validation BLEU-4 score for this epoch
+        is_best (bool): is this checkpoint the best so far?
     '''
 
     state = {
@@ -25,7 +34,7 @@ def save_checkpoint(epoch, epochs_since_improvement, encoder, decoder, encoder_o
         'encoder_optimizer': encoder_optimizer,
         'decoder_optimizer': decoder_optimizer
     }
-    filename = 'checkpoint_' + config.model_basename + '.pth.tar'
+    filename = 'checkpoint_' + config.single_model_basename + '.pth.tar'
     torch.save(state, config.model_path + filename)
 
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint

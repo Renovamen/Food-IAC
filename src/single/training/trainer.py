@@ -1,7 +1,7 @@
 import time
 from torch.nn.utils.rnn import pack_padded_sequence
-from utils.common import *
-from metrics import Metrics
+from ...metrics import Metrics
+from ..utils.common import *
 from .tensorboard import TensorboardWriter
 
 class Trainer:
@@ -269,7 +269,6 @@ class Trainer:
             )
 
         return bleu4
-
 
     def run_train(self):
         # epochs
