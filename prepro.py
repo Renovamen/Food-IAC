@@ -5,26 +5,49 @@ import numpy as np
 from collections import Counter
 from random import seed, choice, sample
 from tqdm import tqdm
-# from scipy.misc import imread, imresize
-from imageio import imread
-from PIL import Image
+
+from src.utils import load_image
 from config import config
 
-'''
-Creates input files for training, validation, and test data.
+def full_word_map(min_word_freq: int, info: dict, output_folder: str) -> dict:
+    karpathy_json_path = info['caption_path']
+    with open(karpathy_json_path, 'r') as j:
+        data = json.load(j)
 
-input params:
-    karpathy_json_path(str): path to the json file in Karpathy's format
-    image_folder(str): path to dataset images
-    captions_per_image(int): number of captions that are sampled per image
-    min_word_freq(int): word with frenquence lower than this value will be map to <unk>
-    output_folder(str): path of folder to store output files
-    max_len(int): captions with length higher than this value will be ignored
-    resized_size(int): size of the image after resized
-'''
+    word_freq = Counter()
+    for img in data['images']:
+        for c in img['sentences']:
+            word_freq.update(c['tokens'])
 
-def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
-                    min_word_freq, output_folder, max_len = 100, resized_size = 256):
+    # create word map (word2id)
+    words = [w for w in word_freq.keys() if word_freq[w] > min_word_freq]
+    word_map = {k: v + 1 for v, k in enumerate(words)}
+    word_map['<unk>'] = len(word_map) + 1
+    word_map['<start>'] = len(word_map) + 1
+    word_map['<end>'] = len(word_map) + 1
+    word_map['<pad>'] = 0
+
+    # create a base/root name for all output files
+    base_filename = info['dataset_basename']
+
+    # save word map (word2id) to a JSON
+    with open(os.path.join(output_folder, 'wordmap_' + base_filename + '.json'), 'w') as j:
+        json.dump(word_map, j)
+
+    return word_map
+
+
+def prepro_aspect(
+    karpathy_json_path: str,
+    image_folder: str,
+    captions_per_image: int,
+    base_filename: str,
+    output_folder: str,
+    word_map: dict,
+    max_len: int = 100,
+    resized_size: int = 256
+) -> None:
+    print('Preprocessing {} ...'.format(base_filename))
 
     # load Karpathy JSON
     with open(karpathy_json_path, 'r') as j:
@@ -40,13 +63,9 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
     test_image_paths = []
     test_image_captions = []
 
-    word_freq = Counter()
-
     for img in data['images']:
         captions = [] # all (validate) captions of current image
         for c in img['sentences']:
-            # update word frequency
-            word_freq.update(c['tokens'])
             # make sure the sentence is shorter than max_len, or ignore it
             if len(c['tokens']) <= max_len:
                 captions.append(c['tokens'])
@@ -54,7 +73,7 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
         if len(captions) == 0:
             continue
 
-        path = os.path.join(image_folder, img['filename']) # path of current image
+        path = os.path.join(image_folder, img['filename'])  # path to current image
 
         if img['split'] in {'train', 'restval'}:
             train_image_paths.append(path)
@@ -70,21 +89,6 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
     assert len(train_image_paths) == len(train_image_captions)
     assert len(val_image_paths) == len(val_image_captions)
     assert len(test_image_paths) == len(test_image_captions)
-
-    # create word map (word2id)
-    words = [w for w in word_freq.keys() if word_freq[w] > min_word_freq]
-    word_map = {k: v + 1 for v, k in enumerate(words)}
-    word_map['<unk>'] = len(word_map) + 1
-    word_map['<start>'] = len(word_map) + 1
-    word_map['<end>'] = len(word_map) + 1
-    word_map['<pad>'] = 0
-
-    # create a base/root name for all output files
-    base_filename = config.dataset_basename
-
-    # save word map (word2id) to a JSON
-    with open(os.path.join(output_folder, 'wordmap_' + base_filename + '.json'), 'w') as j:
-        json.dump(word_map, j)
 
     # sample captions for each image, save images to HDF5 file, and captions and their lengths to JSON files
     seed(123)
@@ -107,8 +111,7 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
             caplens = []
 
             for i, path in enumerate(tqdm(impaths)):
-
-                # Sample captions
+                # sample captions
                 if len(imcaps[i]) < captions_per_image:
                     # if num of captions of current image is less than captions_per_image,
                     # then complete it to captions_per_image from any of the captions
@@ -122,16 +125,7 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
                 assert len(captions) == captions_per_image
 
                 # read image
-                img = imread(impaths[i])
-                if len(img.shape) == 2:
-                    # deal with grayscale image (2-D)
-                    img = img[:, :, np.newaxis]
-                    img = np.concatenate([img, img, img], axis = 2)
-                # img = imresize(img, (resized_size, resized_size))
-                img = np.array(Image.fromarray(img).resize((resized_size, resized_size)))
-                img = img.transpose(2, 0, 1)
-                assert img.shape == (3, resized_size, resized_size)
-                assert np.max(img) <= 255
+                img = load_image(impaths[i])
 
                 # save image to HDF5 file
                 images[i] = img
@@ -147,7 +141,6 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
                     enc_captions.append(enc_c)
                     caplens.append(c_len)
 
-
             # sanity check
             # images.shape[0] = len(impaths)
             assert images.shape[0] * captions_per_image == len(enc_captions) == len(caplens)
@@ -160,10 +153,37 @@ def data_preprocess(karpathy_json_path, image_folder, captions_per_image,
                 json.dump(caplens, j)
 
 
+def prepro_data(
+    aspects: dict,
+    image_folder: str,
+    captions_per_image: int,
+    min_word_freq: int,
+    output_folder: str,
+    max_len: int = 100,
+    resized_size: int = 256
+):
+    word_map = full_word_map(
+        min_word_freq = min_word_freq,
+        info = aspects['all'],
+        output_folder = output_folder
+    )
+    for name in config.aspects.keys():
+        prepro_aspect(
+            karpathy_json_path = aspects[name]['caption_path'],
+            image_folder = image_folder,
+            captions_per_image = captions_per_image,
+            base_filename = aspects[name]['dataset_basename'],
+            output_folder = output_folder,
+            word_map = word_map,
+            max_len = max_len,
+            resized_size = resized_size
+        )
+
+
 if __name__ == '__main__':
     # create input files (along with word map)
-    data_preprocess(
-        karpathy_json_path = config.dataset_caption_path,
+    prepro_data(
+        aspects = config.aspects,
         image_folder = config.dataset_image_path,
         captions_per_image = config.captions_per_image,
         min_word_freq = config.min_word_freq,

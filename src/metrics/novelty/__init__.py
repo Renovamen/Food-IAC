@@ -1,0 +1,1 @@
+from .novelty import Novelty

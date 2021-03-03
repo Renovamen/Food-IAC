@@ -1,8 +1,9 @@
-'''
-Provides:
-    cook_refs(refs, n=4): Transform a list of reference sentences as strings into a form usable by cook_test().
-    cook_test(test, refs, n=4): Transform a test sentence as a string (together with the cooked reference sentences) into a form usable by score_cooked().
-'''
+"""
+cook_refs (refs, n=4): Transform a list of reference sentences as strings into
+    a form usable by cook_test().
+cook_test (test, refs, n=4): Transform a test sentence as a string (together
+    with the cooked reference sentences) into a form usable by score_cooked().
+"""
 
 import copy
 import sys, math, re
@@ -21,9 +22,9 @@ def precook(s, n = 4, out = False):
     return (len(words), counts)
 
 def cook_refs(refs, eff = None, n = 4): ## lhuang: oracle will call with "average"
-    '''Takes a list of reference sentences for a single segment
+    """Takes a list of reference sentences for a single segment
     and returns an object that encapsulates everything that BLEU
-    needs to know about them.'''
+    needs to know about them."""
 
     reflen = []
     maxcounts = {}
@@ -46,8 +47,8 @@ def cook_refs(refs, eff = None, n = 4): ## lhuang: oracle will call with "averag
     return (reflen, maxcounts)
 
 def cook_test(test, refs, eff = None, n = 4):
-    '''Takes a test sentence and returns an object that
-    encapsulates everything that BLEU needs to know about it.'''
+    """Takes a test sentence and returns an object that
+    encapsulates everything that BLEU needs to know about it."""
 
     reflen, refmaxcounts = refs
     testlen, counts = precook(test, n, True)
@@ -72,14 +73,13 @@ def cook_test(test, refs, eff = None, n = 4):
     return result
 
 class BleuScorer(object):
-    """Bleu scorer.
-    """
+    """Bleu scorer."""
 
     __slots__ = "n", "crefs", "ctest", "_score", "_ratio", "_testlen", "_reflen", "special_reflen"
     # special_reflen is used in oracle (proportional effective ref len for a node).
 
     def copy(self):
-        ''' copy the refs.'''
+        """copy the refs."""
         new = BleuScorer(n = self.n)
         new.ctest = copy.copy(self.ctest)
         new.crefs = copy.copy(self.crefs)
@@ -87,7 +87,7 @@ class BleuScorer(object):
         return new
 
     def __init__(self, test = None, refs = None, n = 4, special_reflen = None):
-        ''' singular instance '''
+        """singular instance"""
 
         self.n = n
         self.crefs = []
@@ -96,7 +96,7 @@ class BleuScorer(object):
         self.special_reflen = special_reflen
 
     def cook_append(self, test, refs):
-        '''called by constructor and __iadd__ to avoid creating new instances.'''
+        """called by constructor and __iadd__ to avoid creating new instances."""
 
         if refs is not None:
             self.crefs.append(cook_refs(refs))
@@ -113,7 +113,7 @@ class BleuScorer(object):
         return self._ratio
 
     def score_ratio(self, option = None):
-        '''return (bleu, len_ratio) pair'''
+        """return (bleu, len_ratio) pair"""
         return (self.fscore(option = option), self.ratio(option = option))
 
     def score_ratio_str(self, option = None):
@@ -139,7 +139,7 @@ class BleuScorer(object):
         return self
 
     def rescore(self, new_test):
-        ''' replace test(s) with new test(s), and returns the new score.'''
+        """ replace test(s) with new test(s), and returns the new score."""
 
         return self.retest(new_test).compute_score()
 
@@ -148,7 +148,7 @@ class BleuScorer(object):
         return len(self.crefs)
 
     def __iadd__(self, other):
-        '''add an instance (e.g., from another sentence).'''
+        """add an instance (e.g., from another sentence)."""
 
         if type(other) is tuple:
             ## avoid creating new BleuScorer instances

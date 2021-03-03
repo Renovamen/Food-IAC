@@ -1,74 +1,91 @@
-from .bleu import bleu
-from .cider import cider
-from .meteor import meteor
-from .rouge import rouge
+from typing import Tuple, List, Union
+from .bleu import Bleu
+from .cider import Cider
+from .meteor import Meteor
+from .rouge import Rouge
+from .spice import Spice
+from .novelty import Novelty
+from .diversity import Diversity
 
 class Metrics:
-    '''
-    class Metrics: compute metrics on given reference and candidate sentences set
-                now supports BLEU, CIDEr, METEOR and ROUGE-L
+    """
+    Compute metrics on given reference and candidate sentences set.
+    Now supports BLEU, CIDEr, METEOR and ROUGE-L
 
-    input params:
-        references([[[ref1a], [ref1b], [ref1c]], ..., [[refna], [refnb]]]): reference sencences (word id)
-        candidates([[hyp1], [hyp2], ..., [hypn]]): candidate sencences (word id)
-        rev_word_map: ix2word map
-    '''
+    Args:
+        references ([[[ref1a], [ref1b], [ref1c]], ..., [[refna], [refnb]]]):
+            Reference sencences (list of word ids)
+        candidates ([[hyp1], [hyp2], ..., [hypn]]): Candidate sencences (list of
+            word ids)
+        rev_word_map (dict): ix2word map
+    """
 
-    def __init__(self, references, candidates, rev_word_map):
+    def __init__(
+        self,
+        references: List[List[List[int]]],
+        candidates: List[List[int]],
+        rev_word_map: dict
+    ) -> None:
         corpus = setup_corpus(references, candidates, rev_word_map)
         self.ref_sentence = corpus[0]
         self.hypo_sentence = corpus[1]
 
-    def belu(self):
-        '''
-        compute BLEU scores
-        return:
-            BLEU-1(float), BLEU-2(float), BLEU-3(float), BLEU-4(float)
-        '''
+        self.bleu_computer = Bleu()
+        self.cider_computer = Cider()
+        self.rouge_computer = Rouge()
+        self.meteor_computer = Meteor()
+        self.spice_computer = Spice()
+        self.novelty_computer = Novelty()
+        self.diversity_computer = Diversity()
 
-        bleu_score = bleu.Bleu().compute_score(self.ref_sentence, self.hypo_sentence)
+    @property
+    def belu(self) -> Tuple[float]:
+        bleu_score = self.bleu_computer.compute_score(self.ref_sentence, self.hypo_sentence)
         return bleu_score[0][0], bleu_score[0][0], bleu_score[0][2], bleu_score[0][3]
 
-    def cider(self):
-        '''
-        compute CIDEr scores
-        return: CIDEr(float)
-        '''
-
-        cider_score = cider.Cider().compute_score(self.ref_sentence, self.hypo_sentence)
+    @property
+    def cider(self) -> float:
+        cider_score = self.cider_computer.compute_score(self.ref_sentence, self.hypo_sentence)
         return cider_score[0]
 
-    def rouge(self):
-        '''
-        compute CIDEr scores
-        return: ROUGE-L(float)
-        '''
-
-        rouge_score = rouge.Rouge().compute_score(self.ref_sentence, self.hypo_sentence)
+    @property
+    def rouge(self) -> float:
+        rouge_score = self.rouge_computer.compute_score(self.ref_sentence, self.hypo_sentence)
         return rouge_score[0]
 
-    def meteor(self):
-        '''
-        compute CIDEr scores
-        return: METEOR(float)
-        '''
-
-        meteor_score = meteor.Meteor().compute_score(self.ref_sentence, self.hypo_sentence)
+    @property
+    def meteor(self) -> float:
+        meteor_score = self.meteor_computer.compute_score(self.ref_sentence, self.hypo_sentence)
         return meteor_score[0]
 
-    def all_metrics(self):
-        '''
-        compute all meterics
-        return:
-            BLEU-1(float), BLEU-2(float), BLEU-3(float), BLEU-4(float),
-            CIDEr(float), ROUGE-L(float), METEOR(float)
-        '''
+    @property
+    def spice(self) -> float:
+        spice_score = self.spice_computer.compute_score(self.ref_sentence, self.hypo_sentence)
+        return spice_score[0]
 
-        return self.belu(), self.cider(), self.rouge(), self.meteor()
+    @property
+    def novelty(self) -> Tuple[float]:
+        novelty_score = self.novelty_computer.compute_score(self.ref_sentence, self.hypo_sentence)
+        return novelty_score[0], novelty_score[3]
+
+    @property
+    def diversity(self) -> Tuple[float]:
+        diversity_score = self.diversity_computer.compute_score(self.hypo_sentence)
+        return diversity_score[0], diversity_score[3]
+
+    @property
+    def all_metrics(self) -> Tuple[Union[float, Tuple[float]]]:
+        """
+        Compute all meterics
+
+        Returns:
+            scores (Tuple[Union[float, Tuple[float]]]): BLEU-1, BLEU-2, BLEU-3,
+                BLEU-4, CIDEr, ROUGE-L, METEOR, Spice
+        """
+        return self.belu, self.cider, self.rouge, self.meteor, self.spice
 
 
 def setup_corpus(references, candidates, rev_word_map):
-
     ref_sentence = []
     hypo_sentence = []
 

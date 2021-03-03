@@ -1,13 +1,9 @@
-'''
-Run test on val or test set without Teacher Forcing.
-'''
-
 import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
-import torch.nn.functional as F
 import torchvision.transforms as transforms
 from tqdm import tqdm
+from typing import Tuple
 
 from src.single.utils.dataloader import *
 from src.single.utils.common import *
@@ -19,14 +15,15 @@ cudnn.benchmark = True  # set to true only if inputs to model are fixed size; ot
 
 # some path
 data_folder = config.dataset_output_path  # folder with data files saved by preprocess.py
-data_name = config.dataset_basename  # base name shared by data files
+data_name = config.aspects[config.current_aspect]['dataset_basename']  # base name shared by data files
+word_map_name = config.aspects['all']['dataset_basename']
+model_basename = config.aspects[config.current_aspect]['model_basename']
 
-word_map_file = config.dataset_output_path + 'wordmap_' + data_name + '.json'  # word map, ensure it's the same the data was encoded with and the model was trained with
-checkpoint = config.model_path + 'checkpoint_' + config.single_model_basename + '.pth.tar'  # model checkpoint
-
+word_map_file = os.path.join(config.dataset_output_path, 'wordmap_' + word_map_name + '.json')  # word map, ensure it's the same the data was encoded with and the model was trained with
+checkpoint = os.path.join(config.model_path, 'checkpoint_' + model_basename + '.pth.tar')  # model checkpoint
 
 # load model
-checkpoint = torch.load(checkpoint, map_location = str(device))
+checkpoint = torch.load(checkpoint, map_location=str(device))
 
 decoder = checkpoint['decoder']
 decoder = decoder.to(device)
@@ -50,17 +47,14 @@ normalize = transforms.Normalize(
 )
 
 
-'''
-Evaluation
+def test(beam_size: int) -> Tuple[float]:
+    """
+    Args:
+        beam_size (int): Beam size, set ``beam_size = 1`` when using greedy search.
 
-input params:
-    beam_size: beam size at which to generate captions for evaluation
-               set beam_size = 1 if you want to use greedy search
-
-return:
-    bleu4: BLEU-4 score
-'''
-def evaluate(beam_size):
+    Returns:
+        scores (Tuple[float]): Metrics
+    """
 
     # DataLoader
     loader = torch.utils.data.DataLoader(
@@ -84,8 +78,7 @@ def evaluate(beam_size):
     prediction = list()
 
     # for each image
-    for i, (image, caps, caplens, allcaps) in enumerate(tqdm(loader, desc="Evaluating at beam size " + str(beam_size))):
-
+    for i, (image, caps, caplens, allcaps) in enumerate(tqdm(loader, desc="Beam size: " + str(beam_size))):
         # move to GPU device, if available
         image = image.to(device)  # (1, 3, 256, 256)
 
@@ -105,9 +98,12 @@ def evaluate(beam_size):
 
         assert len(ground_truth) == len(prediction)
 
+        if i >= 10:
+            break
+
     # calculate metrics
     metrics = Metrics(ground_truth, prediction, rev_word_map)
-    scores = metrics.all_metrics()
+    scores = metrics.all_metrics
 
     return scores
 
@@ -115,7 +111,7 @@ def evaluate(beam_size):
 if __name__ == '__main__':
     beam_size = 5
 
-    (bleu1, bleu2, bleu3, bleu4), cider, rouge, meteor = evaluate(beam_size)
+    (bleu1, bleu2, bleu3, bleu4), cider, rouge, meteor, spice = test(beam_size)
 
     print("\nScores @ beam size of %d are:" % beam_size)
     print("   BLEU-1: %.4f" % bleu1)
@@ -125,3 +121,4 @@ if __name__ == '__main__':
     print("   CIDEr: %.4f" % cider)
     print("   ROUGE-L: %.4f" % rouge)
     print("   METEOR: %.4f" % meteor)
+    print("   SPICE: %.4f" % spice)

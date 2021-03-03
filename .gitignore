@@ -5,6 +5,11 @@
 /logs/
 data.tar.bz2
 
+/src/metrics/spice/cache/
+/src/metrics/spice/tmp/
+/src/metrics/spice/lib/stanford-corenlp-3.6.0.jar
+/src/metrics/spice/lib/stanford-corenlp-3.6.0-models.jar
+
 # Editors
 .vscode/
 .idea/
@@ -31,7 +36,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
 lib64/
 parts/
 sdist/

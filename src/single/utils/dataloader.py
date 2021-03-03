@@ -1,21 +1,29 @@
-import torch
-from torch.utils.data import Dataset
+import os
 import h5py
 import json
-import os
+from typing import Optional, Callable
+
+import torch
+from torch.utils.data import Dataset
 
 class CaptionDataset(Dataset):
-    '''
+    """
     A PyTorch Dataset class to be used in a PyTorch DataLoader to create batches.
 
-    input params:
-        data_folder: folder where data files are stored
-        data_name: base name of processed datasets
-        split: 'train', 'val', 'test'
-        transform: image transform pipeline
-    '''
+    Args:
+        data_folder (str): Path to folder where data files are stored
+        data_name (str): Base name of processed datasets
+        split (str): 'train' / 'val' / 'test'
+        transform (Callable, optional): Image transform pipeline
+    """
 
-    def __init__(self, data_folder, data_name, split, transform = None):
+    def __init__(
+        self,
+        data_folder: str,
+        data_name: str,
+        split: str,
+        transform: Optional[Callable] = None
+    ) -> None:
         self.split = split
         assert self.split in {'train', 'val', 'test'}
 
@@ -40,7 +48,7 @@ class CaptionDataset(Dataset):
         # size of dataset
         self.dataset_size = len(self.captions)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int) -> tuple:
         # Remember, the Nth caption corresponds to the (N // captions_per_image)th image
         img = torch.FloatTensor(self.imgs[i // self.cpi] / 255.)
         if self.transform is not None:
@@ -56,5 +64,5 @@ class CaptionDataset(Dataset):
             all_captions = torch.LongTensor(self.captions[((i // self.cpi) * self.cpi):(((i // self.cpi) * self.cpi) + self.cpi)])
             return img, caption, caplen, all_captions
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.dataset_size

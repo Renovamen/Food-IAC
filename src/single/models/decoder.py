@@ -1,3 +1,4 @@
+from typing import Tuple
 import torch
 from torch import nn
 import torchvision
@@ -7,47 +8,50 @@ import torch.nn.functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Sentinel(nn.Module):
-    '''
-    class Sentinel(): calc visual sentinel s_t
+    """
+    Compute visual sentinel s_t.
 
-    input params:
-        input_size: dimention of x_t ([ w_t; v^g ] => 2 * embed_dim)
-        decoder_dim: dimention of decoder's hidden layer
-        dropout: dropout
-    '''
+    Args:
+        input_size (int): Dimention of x_t ([ w_t; v^g ] => 2 * embed_dim)
+        decoder_dim (int): Dimention of decoder's hidden layer
+        dropout (float): Dropout
+    """
 
-    def __init__(self, input_size, decoder_dim, dropout = 0.5):
+    def __init__(
+        self, input_size: int, decoder_dim: int, dropout: float = 0.5
+    ) -> None:
         super(Sentinel, self).__init__()
         self.w_x = nn.Sequential(
             nn.Dropout(p = dropout),
             nn.Linear(input_size, decoder_dim)
-        ) # W_x
+        )  # W_x
         self.w_h = nn.Sequential(
             nn.Dropout(p = dropout),
             nn.Linear(decoder_dim, decoder_dim)
-        ) # W_h
+        )  # W_h
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
         self.init_weights()
 
-    def init_weights(self):
-        '''
-        intalize W_x and W_h
-        '''
-
+    def init_weights(self) -> None:
+        """
+        Intalize W_x and W_h.
+        """
         init.xavier_uniform_(self.w_x[1].weight)
         init.xavier_uniform_(self.w_h[1].weight)
 
-    def forward(self, x_t, h_last, m_t):
-        '''
-        input params:
-            x_t: input ([ w_t; v^g ]) (batch_size, 2 * embed_dim)
-            h_last: hiddent state at time t-1 (batch_size, decoder_dim)
-            m_t: cell state at time t (batch_size, decoder_dim)
-        return:
-            s_t: visual sentinel (batch_size, decoder_dim)
-        '''
+    def forward(
+        self, x_t: torch.Tensor, h_last: torch.Tensor, m_t: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Args:
+            x_t (torch.Tensor): Input tensor ([ w_t; v^g ]) (batch_size, 2 * embed_dim)
+            h_last (torch.Tensor): Hidden state at time ``t-1`` (batch_size, decoder_dim)
+            m_t (torch.Tensor): Cell state at time ``t`` (batch_size, decoder_dim)
 
+        Returns:
+            s_t (torch.Tensor): Visual sentinel (batch_size, decoder_dim)
+        """
         # eq.9: g_t = sigmoid(W_x * x_t + W_h * h_{t-1})
         g_t = self.w_x(x_t) + self.w_h(h_last)  # (batch_size, decoder_dim)
         g_t = self.sigmoid(g_t)  # (batch_size, decoder_dim)
@@ -57,32 +61,34 @@ class Sentinel(nn.Module):
 
 
 class LSTM1(nn.Module):
-    '''
-    class LSTM1():
+    """
+    LSTM-1
 
-    input params:
-        input_size: dimention of x_t^1 ([ h_last^2; w_t; v^g ] => 2 * embed_dim + decoder_dim)
-        decoder_dim: dimention of decoder's hidden layer
-    '''
+    Args:
+        input_size (int): Dimention of x_t^1 ([ h_last^2; w_t; v^g ] => 2 * embed_dim + decoder_dim)
+        decoder_dim (int): Dimention of decoder's hidden layer
+    """
 
-    def __init__(self, input_size, decoder_dim):
+    def __init__(self, input_size: int, decoder_dim: int) -> None:
         super(LSTM1, self).__init__()
         self.LSTM = nn.LSTMCell(input_size, decoder_dim, bias = True)
         self.sentinel = Sentinel(input_size, decoder_dim)
 
-    def forward(self, x_t, states):
-        '''
-        input params:
-            x_t: input ([ h_last^2; w_t; v^g ]) (batch_size, 2 * embed_dim + decoder_dim)
-            states(tuple): a tuple contains:
-                0. h_last^1: hiddent state of LSTM1 at time t-1 (batch_size, decoder_dim)
-                1. m_last^1: cell state of LSTM1 at time t-1 (batch_size, decoder_dim)
-        return:
-            h_t^1: hiddent state of LSTM1 at time t (batch_size, decoder_dim)
-            m_t^1: cell state of LSTM1 at time t (batch_size, decoder_dim)
-            s_t: visual sentinel at time t (batch_size, decoder_dim)
-        '''
+    def forward(
+        self, x_t: torch.Tensor, states: Tuple[torch.Tensor]
+    ) -> Tuple[torch.Tensor]:
+        """
+        Args:
+            x_t (torch.Tensor): Input tensor ([ h_last^2; w_t; v^g ]) (batch_size, 2 * embed_dim + decoder_dim)
+            states (tuple): A tuple:
+                0. h_last^1 (torch.Tensor): hidden state of LSTM-1 at time t-1 (batch_size, decoder_dim)
+                1. m_last^1 (torch.Tensor): cell state of LSTM-1 at time t-1 (batch_size, decoder_dim)
 
+        Returns:
+            h_t^1 (torch.Tensor): Hidden state of LSTM-1 at time ``t`` (batch_size, decoder_dim)
+            m_t^1 (torch.Tensor): Cell state of LSTM1 at time ``t`` (batch_size, decoder_dim)
+            s_t (torch.Tensor): Visual sentinel at time ``t`` (batch_size, decoder_dim)
+        """
         h_last, m_last = states
         h_t, m_t = self.LSTM(x_t, (h_last, m_last))
         s_t = self.sentinel(x_t, h_last, m_t)
@@ -90,46 +96,50 @@ class LSTM1(nn.Module):
 
 
 class LSTM2(nn.Module):
-    '''
-    class LSTM2():
+    """
+    LSTM-2
 
     input params:
-        input_size: dimention of x_t^2 ([ c_t; h_t^1 ] => 2 * decoder_dim)
-        decoder_dim: dimention of decoder's hidden layer
-    '''
+        input_size (int): Dimention of x_t^2 ([ c_t; h_t^1 ] => 2 * decoder_dim)
+        decoder_dim (int): Dimention of decoder's hidden layer
+    """
 
-    def __init__(self, input_size, decoder_dim):
+    def __init__(self, input_size: int, decoder_dim: int) -> None:
         super(LSTM2, self).__init__()
         self.LSTM = nn.LSTMCell(input_size, decoder_dim, bias = True)
 
-    def forward(self, x_t, states):
-        '''
-        input params:
-            x_t: input ([ c_t; h_t^1 ]) (batch_size, 2 * decoder_dim)
-            states(tuple): a tuple contains:
-                0. h_last^2: hiddent state of LSTM2 at time t-1 (batch_size, decoder_dim)
-                1. m_last^2: cell state of LSTM2 at time t-1 (batch_size, decoder_dim)
-        return:
-            h_t^2: hiddent state of LSTM2 at time t (batch_size, decoder_dim)
-            m_t^2: cell state at of LSTM2 time t (batch_size, decoder_dim)
-        '''
+    def forward(
+        self, x_t: torch.Tensor, states: Tuple[torch.Tensor]
+    ) -> Tuple[torch.Tensor]:
+        """
+        Args:
+            x_t (torch.Tensor): Input tensor ([ c_t; h_t^1 ]) (batch_size, 2 * decoder_dim)
+            states (tuple): A tuple:
+                0. h_last^2 (torch.Tensor): Hidden state of LSTM-2 at time ``t-1`` (batch_size, decoder_dim)
+                1. m_last^2 (torch.Tensor): Cell state of LSTM-2 at time ``t-1`` (batch_size, decoder_dim)
 
+        Returns:
+            h_t^2 (torch.Tensor): Hidden state of LSTM-2 at time ``t`` (batch_size, decoder_dim)
+            m_t^2 (torch.Tensor): Cell state at of LSTM-2 time ``t`` (batch_size, decoder_dim)
+        """
         h_last, m_last = states
         h_t, m_t = self.LSTM(x_t, (h_last, m_last))
         return h_t, m_t
 
 
 class AdaptiveAttention(nn.Module):
-    '''
-    class AdaptiveAttention(): adaptive attention
+    """
+    Adaptive attention
 
-    input params:
-        attention_dim: dimention of attention network
-        decoder_dim: dimention of decoder's hidden layer
-        dropout: dropout
-    '''
+    Args:
+        attention_dim (int): Dimention of attention network
+        decoder_dim (int): Dimention of decoder's hidden layer
+        dropout (float): Dropout
+    """
 
-    def __init__(self, attention_dim, decoder_dim, dropout = 0.5):
+    def __init__(
+        self, attention_dim: int, decoder_dim: int, dropout: float = 0.5
+    ) -> None:
         super(AdaptiveAttention, self).__init__()
 
         self.affine_s = nn.Linear(decoder_dim, decoder_dim)
@@ -145,18 +155,20 @@ class AdaptiveAttention(nn.Module):
         self.relu = nn.ReLU()
         self.softmax = nn.Softmax(dim = 1)
 
-    def forward(self, V, h_t, s_t):
-        '''
-        input params:
-            V: spatial image feature, V = [ v_1, v_2, ... v_num_pixels ] (batch_size, num_pixels = 49, decoder_dim)
-            h_t: hiddent state at time t (batch_size, decoder_dim)
-            s_t: visual sentinel at time t (batch_size, decoder_dim)
-        return:
-            adaptive_out: context vector in adaptive attention (batch_size, decoder_dim)
-            alpha_hat_t: attention weight in adaptive attention (batch_size, num_pixels)
-            beta_t: sentinel gate in adaptive attention (batch_size, 1)
-        '''
+    def forward(
+        self, V: torch.Tensor, h_t: torch.Tensor, s_t: torch.Tensor
+    ) -> Tuple[torch.Tensor]:
+        """
+        Args:
+            V (torch.Tensor): Spatial image feature, V = [ v_1, v_2, ... v_num_pixels ] (batch_size, num_pixels = 49, decoder_dim)
+            h_t (torch.Tensor): Hidden state at time t (batch_size, decoder_dim)
+            s_t (torch.Tensor): Visual sentinel at time t (batch_size, decoder_dim)
 
+        Returns:
+            adaptive_out (torch.Tensor): Context vector in adaptive attention (batch_size, decoder_dim)
+            alpha_hat_t (torch.Tensor): Attention weight in adaptive attention (batch_size, num_pixels)
+            beta_t (torch.Tensor): Sentinel gate in adaptive attention (batch_size, 1)
+        """
         s_t = self.relu(self.affine_s(s_t))  # (batch_size, decoder_dim)
         h_t = self.tanh(self.affine_h(h_t))  # (batch_size, decoder_dim)
 
@@ -193,21 +205,30 @@ class AdaptiveAttention(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, embed_dim, embeddings, fine_tune, attention_dim,
-                 decoder_dim, vocab_size, dropout = 0.5):
-        '''
-        class Decoder(): decoder with attention
+    """
+    Decoder with two-layer LSTM and adaptive attention
 
-        input params:
-            attention_dim: dimention of attention network
-            embed_dim: dimention of word embeddings
-            embeddings: word embeddings
-            fine_tune: allow fine-tuning of embedding layer?
-                       (only makes sense when using pre-trained embeddings)
-            decoder_dim: dimention of decoder's hidden layer
-            vocab_size: size of vocab vocabulary
-            dropout: dropout
-        '''
+    Args:
+        embed_dim (int): Dimention of word embeddings
+        embeddings (torch.Tensor): Word embeddings
+        fine_tune (bool): Allow fine-tuning of embedding layer? (only makes
+            sense when using pre-trained embeddings)
+        attention_dim (int): Dimention of attention network
+        decoder_dim (int): Dimention of decoder's hidden layer
+        vocab_size (int): Size of vocab vocabulary
+        dropout (float): Dropout
+    """
+
+    def __init__(
+        self,
+        embed_dim: int,
+        embeddings: torch.Tensor,
+        fine_tune: bool,
+        attention_dim: int,
+        decoder_dim: int,
+        vocab_size: int,
+        dropout: float = 0.5
+    ) -> None:
         super(Decoder, self).__init__()
 
         self.embed_dim = embed_dim
@@ -232,16 +253,17 @@ class Decoder(nn.Module):
         self.LSTM2 = LSTM2(decoder_dim * 2, decoder_dim)
         self.adaptive_attention = AdaptiveAttention(attention_dim, decoder_dim)
 
-    def set_embeddings(self, embeddings, fine_tune = True):
-        '''
-        set weights of embedding layer
+    def set_embeddings(
+        self, embeddings: torch.Tensor, fine_tune: bool = True
+    ) -> None:
+        """
+        Set weights of embedding layer
 
-        input param:
-            embeddings: word embeddings
-            fine_tune: allow fine-tuning of embedding layer?
-                    (only makes sense when using pre-trained embeddings)
-        '''
-
+        Args:
+            embeddings (torch.Tensor): Word embeddings
+            fine_tune (bool): Allow fine-tuning of embedding layer? (only
+                makes sense when using pre-trained embeddings)
+        """
         if embeddings is None:
             # initialize embedding layer with the uniform distribution
             self.embedding.weight.data.uniform_(-0.1, 0.1)
@@ -249,45 +271,50 @@ class Decoder(nn.Module):
             # initialize embedding layer with pre-trained embeddings
             self.embedding.weight = nn.Parameter(embeddings, requires_grad = fine_tune)
 
-    def init_weights(self):
-        '''
-        initialize embedding and fc layer with the uniform distribution, bias = 0
-        '''
-
+    def init_weights(self) -> None:
+        """
+        Initialize embedding and fc layer with the uniform distribution, bias = 0
+        """
         self.fc.bias.data.fill_(0)
         self.fc.weight.data.uniform_(-0.1, 0.1)
 
-    def init_hidden_state(self, spatial_feature):
-        '''
-        initialize cell state and hidden state for LSTM (a vector filled with 0)
+    def init_hidden_state(
+        self, spatial_feature: torch.Tensor
+    ) -> Tuple[torch.Tensor]:
+        """
+        Initialize cell state and hidden state for LSTM (a vector filled with 0)
 
-        input params:
-            spatial_feature: spatial image feature (batch_size, num_pixels, decoder_dim)
-        return:
-            h: intial hidden state (batch_size, decoder_dim)
-            c: intial cell state (batch_size, decoder_dim)
-        '''
+        Args:
+            spatial_feature (torch.Tensor): Spatial image feature (batch_size, num_pixels, decoder_dim)
 
+        Returns:
+            h (torch.Tensor): Intial hidden state (batch_size, decoder_dim)
+            c (torch.Tensor): Intial cell state (batch_size, decoder_dim)
+        """
         h = torch.zeros(spatial_feature.size(0), self.decoder_dim).to(device) # h_0: (batch_size, decoder_dim)
         c = torch.zeros(spatial_feature.size(0), self.decoder_dim).to(device) # c_0: (batch_size, decoder_dim)
         return h, c
 
-    def forward(self, encoder_out, encoded_captions, caption_lengths):
-        '''
-        input params:
-            encoder_out(tuple): a tuple contains:
-                0. spatial_feature: spatial image feature (batch_size, num_pixels, decoder_dim)
-                1. global_image: global image feature (batch_size, embed_dim)
-            encoded_captions: caption after one-hot encoding (batch_size, max_caption_length)
-            caption_lengths: caption length (batch_size, 1)
+    def forward(
+        self,
+        encoder_out: Tuple[torch.Tensor],
+        encoded_captions: torch.LongTensor,
+        caption_lengths: torch.LongTensor
+    ) -> (torch.Tensor, torch.LongTensor, list, torch.LongTensor):
+        """
+        Args:
+            encoder_out (tuple): A tuple:
+                0. spatial_feature (torch.Tensor): Spatial image feature (batch_size, num_pixels, decoder_dim)
+                1. global_image (torch.Tensor): Global image feature (batch_size, embed_dim)
+            encoded_captions (torch.LongTensor): caption after one-hot encoding (batch_size, max_caption_length)
+            caption_lengths (torch.LongTensor): caption length (batch_size, 1)
 
         return:
-            predictions: word probability over vocabulary predicted by model
-            encoded_captions: sorted encoded captions
-            decode lengths: actual caption length - 1
-            sort_ind: sorted indices
-        '''
-
+            predictions (torch.Tensor): word probability over vocabulary predicted by model
+            encoded_captions (torch.LongTensor): sorted encoded captions
+            decode_lengths (list): actual caption length - 1
+            sort_ind (torch.LongTensor): sorted indices
+        """
         spatial_feature, global_image = encoder_out
 
         batch_size = spatial_feature.size(0)
@@ -297,7 +324,7 @@ class Decoder(nn.Module):
         # sort input captions by decreasing lengths
         # because in 'train.py', 'pack_padded_sequence' will be used to deal with the pads in captions
         # and 'pack_padded_sequence' requires the captions sorted by decreasing lengths
-        caption_lengths, sort_ind = caption_lengths.squeeze(1).sort(dim = 0, descending = True)
+        caption_lengths, sort_ind = caption_lengths.squeeze(1).sort(dim=0, descending=True)
         # sort_ind contains elements of the batch index of the tensor encoder_out.
         # for example, if sort_ind is [3,2,0],
         # then that means the descending order starts with batch number 3,then batch number 2, and finally batch number 0.
@@ -352,25 +379,28 @@ class Decoder(nn.Module):
 
         return predictions, encoded_captions, decode_lengths, sort_ind
 
-    def beam_search(self, encoder_out, beam_size, word_map):
-        '''
-        beam search (used in evaluation without Teacher Forcing and inference)
+    def beam_search(
+        self, encoder_out: Tuple[torch.Tensor], beam_size: int, word_map: dict
+    ) -> Tuple[list]:
+        """
+        Beam search (used in evaluation without Teacher Forcing and inference).
 
-        TODO: batched beam search
-        therefore, DO NOT use a batch_size greater than 1 - IMPORTANT!
+        TODO: Batched beam search
+        Therefore, DO NOT use a batch_size greater than 1 - IMPORTANT!
 
-        input params:
-            encoder_out(tuple): a tuple contains:
+        Args:
+            encoder_out (tuple): A tuple:
                 0. spatial_feature: spatial image feature (1, num_pixels, decoder_dim)
                 1. global_image: global image feature (1, embed_dim)
-            beam_size(int): beam size
-            word_map(dict): word2id map
+            beam_size (int): beam size
+            word_map (dict): word2id map
 
-        return:
-            seq(list[word_id1, ..., word_idn]): the predicted sentence after beam search
-            alphas(list): attention weights at each time step
-            betas(list): sentinel gate at each time step
-        '''
+        Returns:
+            seq (list[word_id1, ..., word_idn]): Predicted sentence after beam search
+            alphas (list): Attention weights at each time step
+            betas (list): Sentinel gate at each time step
+            hiddens (list): Hidden states at each time step
+        """
 
         import math
 
@@ -419,7 +449,6 @@ class Decoder(nn.Module):
 
         # s is a number less than or equal to k, because sequences are removed from this process once they hit <end>
         while True:
-
             embeddings = self.embedding(k_prev_words).squeeze(1)  # (s, embed_dim)
 
             # input of LSTM1: [ h_last^2; w_t; v^g ]
@@ -455,7 +484,7 @@ class Decoder(nn.Module):
                 top_k_scores, top_k_words = scores.view(-1).topk(k, 0, True, True)  # (s)
 
             # convert unrolled indices to actual indices of scores
-            prev_word_inds = top_k_words / vocab_size  # (s)
+            prev_word_inds = top_k_words // vocab_size  # (s)
             next_word_inds = top_k_words % vocab_size  # (s)
 
             # add new words, alphas, betas and hidden states to sequences
@@ -475,9 +504,6 @@ class Decoder(nn.Module):
                 complete_seqs_alpha.extend(seqs_alpha[complete_inds].tolist())
                 complete_seqs_beta.extend(seqs_beta[complete_inds])
                 complete_seqs_hidden.extend(seqs_hidden[complete_inds])
-                # print('-------------- in ---------------')
-                # print(top_k_scores)
-                # print(complete_seqs_scores)
 
             k -= len(complete_inds)  # reduce beam length accordingly
             if k == 0:
@@ -505,10 +531,6 @@ class Decoder(nn.Module):
                 complete_seqs_hidden.extend(seqs_hidden)
                 break
             step += 1
-
-        # print('-------------- out ---------------')
-        # print(top_k_scores)
-        # print(complete_seqs_scores)
 
         i = complete_seqs_scores.index(max(complete_seqs_scores))
         seq = complete_seqs[i]

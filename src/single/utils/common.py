@@ -10,11 +10,11 @@ def save_checkpoint(
     decoder_optimizer: torch.optim.Optimizer,
     bleu4: float,
     is_best: bool
-):
-    '''
-    save model checkpoint
+) -> None:
+    """
+    Save model checkpoint.
 
-    input params:
+    Args:
         epoch (int): epoch number the current checkpoint have been trained for
         epochs_since_improvement (int): number of epochs since last improvement in BLEU-4 score
         encoder (nn.Module): encoder model
@@ -23,7 +23,7 @@ def save_checkpoint(
         decoder_optimizer (nn.Optimizer): optimizer to update decoder's weights
         bleu4 (float): validation BLEU-4 score for this epoch
         is_best (bool): is this checkpoint the best so far?
-    '''
+    """
 
     state = {
         'epoch': epoch,
@@ -34,7 +34,7 @@ def save_checkpoint(
         'encoder_optimizer': encoder_optimizer,
         'decoder_optimizer': decoder_optimizer
     }
-    filename = 'checkpoint_' + config.single_model_basename + '.pth.tar'
+    filename = 'checkpoint_' + config.aspects[config.current_aspect]['model_basename'] + '.pth.tar'
     torch.save(state, config.model_path + filename)
 
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
@@ -42,24 +42,28 @@ def save_checkpoint(
         torch.save(state, config.model_path + 'best_' + filename)
 
 
-def load_checkpoint(checkpoint_path, fine_tune_encoder, encoder_lr):
-    '''
-    load a checkpoint, so that we can continue to train on it
+def load_checkpoint(
+    checkpoint_path: str, fine_tune_encoder: bool, encoder_lr: float
+) -> tuple:
+    """
+    Load a checkpoint, so that we can continue to train on it.
 
-    input params:
-        checkpoint_path: path of the checkpoint
-        fine_tune_encoder: fine-tune encoder or not
-        encoder_lr: learning rate of encoder (if fine-tune)
+    Args:
+        checkpoint_path (str): path of the checkpoint
+        fine_tune_encoder (bool): fine-tune encoder or not
+        encoder_lr (float): learning rate of encoder (if fine-tune)
 
-    return ():
-        encoder: encoder model
-        decoder: decoder model
-        encoder_optimizer: optimizer to update encoder's weights ('none' if there is no optimizer for encoder in checkpoint)
-        decoder_optimizer: optimizer to update decoder's weights
-        start_epoch: we should start training the model from __th epoch
-        epochs_since_improvement: number of epochs since last improvement in BLEU-4 score
-        best_bleu4: BLEU-4 score of checkpoint
-    '''
+    Returns:
+        encoder (nn.Module): Encoder model
+        decoder (nn.Module): Decoder model
+        encoder_optimizer (nn.Optimizer): Optimizer to update encoder's weights
+            ('none' if there is no optimizer for encoder in checkpoint)
+        decoder_optimizer (nn.Optimizer): Optimizer to update decoder's weights
+        start_epoch (int): We should start training the model from __th epoch
+        epochs_since_improvement (int): Number of epochs since last improvement
+            in BLEU-4 score
+        best_bleu4 (float): BLEU-4 score of checkpoint
+    """
 
     checkpoint = torch.load(checkpoint_path)
 
@@ -83,76 +87,49 @@ def load_checkpoint(checkpoint_path, fine_tune_encoder, encoder_lr):
             start_epoch, epochs_since_improvement, best_bleu4
 
 
-class AverageMeter(object):
-    '''
-    keeps track of most recent, average, sum, and count of a metric
-    '''
+def clip_gradient(optimizer: torch.optim.Optimizer, grad_clip: float) -> None:
+    """
+    Clip gradients computed during backpropagation to avoid explosion
+    of gradients.
 
-    def __init__(self, tag = None, writer = None):
-        self.writer = writer
-        self.tag = tag
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n = 1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-        # tensorboard
-        if self.writer is not None:
-            self.writer.add_scalar(self.tag, val)
-
-
-def clip_gradient(optimizer, grad_clip):
-    '''
-    clips gradients computed during backpropagation to avoid explosion of gradients
-
-    input params:
-        optimizer: optimizer with the gradients to be clipped
-        grad_clip: clip value
-    '''
-
+    Args:
+        optimizer (optim.Optimizer): optimizer with the gradients to be clipped
+        grad_clip (flaot): clip value
+    """
     for group in optimizer.param_groups:
         for param in group['params']:
             if param.grad is not None:
                 param.grad.data.clamp_(-grad_clip, grad_clip)
 
 
-def adjust_learning_rate(optimizer, shrink_factor):
-    '''
-    shrinks learning rate by a specified factor
+def adjust_learning_rate(
+    optimizer: torch.optim.Optimizer, shrink_factor: float
+) -> None:
+    """
+    Shrink learning rate by a specified factor.
 
-    input params:
-        optimizer: optimizer whose learning rate must be shrunk
-        shrink_factor: factor in interval (0, 1) to multiply learning rate with
-    '''
-
+    Args:
+        optimizer (optim.Optimizer): optimizer whose learning rate must be shrunk
+        shrink_factor (float): factor in interval (0, 1) to multiply learning rate with
+    """
     print("\nDECAYING learning rate.")
     for param_group in optimizer.param_groups:
         param_group['lr'] = param_group['lr'] * shrink_factor
     print("The new learning rate is %f\n" % (optimizer.param_groups[0]['lr'],))
 
 
-def accuracy(scores, targets, k):
-    '''
-    computes top-k accuracy, from predicted and true labels
+def accuracy(scores: torch.Tensor, targets: torch.Tensor, k: int) -> float:
+    """
+    Compute top-k accuracy, from predicted and true labels.
 
-    input params:
-        scores: scores from the model
-        targets: true labels
-        k: k in top-k accuracy
+    Args:
+        scores (torch.Tensor): Scores from the model
+        targets (torch.Tensor): Ground truth labels
+        k (int): k in top-k accuracy
 
-    return:
-        top-k accuracy
-    '''
-
+    Returns:
+        accuracy (float): Top-k accuracy
+    """
     batch_size = targets.size(0)
     # Return the indices of the top-k elements along the first dimension (along every row of a 2D Tensor), sorted
     _, ind = scores.topk(k, 1, True, True)

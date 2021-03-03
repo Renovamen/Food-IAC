@@ -2,9 +2,7 @@ from .cider_scorer import CiderScorer
 import pdb
 
 class Cider:
-    '''
-    main Class to compute the CIDEr metric
-    '''
+    """Main Class to compute the CIDEr metric"""
 
     def __init__(self, test = None, refs = None, n = 4, sigma = 6.0):
         # set cider to sum over 1 to 4-grams
@@ -13,15 +11,16 @@ class Cider:
         self._sigma = sigma
 
     def compute_score(self, reference, hypothesis):
-        '''
-        main function to compute CIDEr score
+        """
+        Compute CIDEr score
 
-        input params:
-            reference(list): reference sentences ([[ref1a, ref1b, ref1c], ..., [refna, refnb]])
-            hypothesis(list): predicted sentences ([[hypo1], [hypo2], ..., [hypon]])
-        return:
-            cider(float): computed CIDEr score for the corpus
-        '''
+        Args:
+            reference (list): Reference sentences ([[ref1a, ref1b, ref1c], ..., [refna, refnb]])
+            hypothesis (list): Predicted sentences ([[hypo1], [hypo2], ..., [hypon]])
+
+        Returns:
+            cider (float): computed CIDEr score for the corpus
+        """
 
         assert len(reference) == len(hypothesis)
 

@@ -3,30 +3,34 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-def init_embeddings(embeddings):
-    '''
-    fills embedding tensor with values from the uniform distribution
+def init_embeddings(embeddings: torch.Tensor) -> None:
+    """
+    Fill embedding tensor with values from the uniform distribution.
 
-    input params:
-        embeddings: embedding tensor
-    '''
+    Args:
+        embeddings (torch.Tensor): Embedding tensor
+    """
     bias = np.sqrt(3.0 / embeddings.size(1))
     torch.nn.init.uniform_(embeddings, -bias, bias)
 
 
-def load_embeddings(emb_file, word_map, output_folder, output_basename):
-    '''
-    creates an embedding tensor for the specified word map, for loading into the model
+def load_embeddings(
+    emb_file: str, word_map: dict, output_folder: str, output_basename: str
+) -> (torch.Tensor, int):
+    """
+    Create an embedding tensor for the specified word map, for loading into
+    the model.
 
-    input params:
-        emb_file: file containing embeddings (stored in GloVe format)
-        word_map: word map
-        output_folder: path of the folder to store output files
-        output_basename: basename for output files
+    Args:
+        emb_file (str): Word embeddings file (stored in GloVe format)
+        word_map (dict): Word map
+        output_folder (str): Path to the folder to store output files
+        output_basename (str): Basename for output files
 
-    return:
-        embeddings in the same order as the words in the word map, dimension of embeddings
-    '''
+    Returns:
+        embeddings (torch.Tensor): Embeddings in the same order as the words in the word map
+        embed_dim (int): Dimension of embeddings
+    """
 
     emb_basename = os.path.basename(emb_file)
     cache_path = os.path.join(output_folder, emb_basename + '_' + output_basename + '.pth.tar')
@@ -40,7 +44,7 @@ def load_embeddings(emb_file, word_map, output_folder, output_basename):
 
         vocab = set(word_map.keys())
 
-        # create tensor to hold embeddings, initialize
+        # create and initialize a tensor to hold embeddings
         embeddings = torch.FloatTensor(len(vocab), embed_dim)
         init_embeddings(embeddings)
 

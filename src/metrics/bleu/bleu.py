@@ -1,9 +1,7 @@
 from .bleu_scorer import BleuScorer
 
 class Bleu:
-    '''
-    main Class to compute the BLEU metric
-    '''
+    """Main Class to compute the BLEU metric"""
 
     def __init__(self, n = 4):
         # default compute Blue score up to 4
@@ -12,16 +10,17 @@ class Bleu:
         self.ref_for_image = {}
 
     def compute_score(self, reference, hypothesis):
-        '''
-        main function to compute BLEU score
+        """
+        Compute BLEU score
 
-        input params:
-            reference(list): reference sentences ([[ref1a, ref1b, ref1c], ..., [refna, refnb]])
-            hypothesis(list): predicted sentences ([[hypo1], [hypo2], ..., [hypon]])
-        return:
+        Args:
+            reference (list): Reference sentences ([[ref1a, ref1b, ref1c], ..., [refna, refnb]])
+            hypothesis (list): Predicted sentences ([[hypo1], [hypo2], ..., [hypon]])
+
+        Returns:
             score: computed BLEU1-BLEU4 score for the corpus
             scores: computed BLEU1-BLEU4 scores for each image
-        '''
+        """
 
         assert len(reference) == len(hypothesis)
 
@@ -43,7 +42,6 @@ class Bleu:
         score, scores = bleu_scorer.compute_score(option = 'closest', verbose = 0)
         # score, scores = bleu_scorer.compute_score(option = 'average', verbose = 1)
 
-        # return (bleu, bleu_info)
         return score, scores
 
     def method(self):
