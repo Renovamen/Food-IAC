@@ -1,4 +1,4 @@
-'''
+"""
 This script is used to:
 1. translate captions to lowercase
 2. remove digits, punctions and useless chars (like '\r')
@@ -8,8 +8,8 @@ This script is used to:
 6. calc informativeness score (based on tf-idf) after step 5 and filter captions
 7. remove captions with manually selected bad words (like 'congratulations')
 
-The output is 'clean_path'
-'''
+The output path is `clean_path`
+"""
 
 import json
 import re
@@ -86,15 +86,15 @@ def reduce_cap_length(cap):
     return clean_cap
 
 
-# get pos tag of each word
 def get_pos(cap):
+    """Get pos tag of each word"""
     tokens = re.findall(r"[\w']+|[.,!?;]", cap, re.UNICODE)
     token_pos = pos_tag(tokens)
     return token_pos
 
 
-# lemmatize each word
 def lemmatize(token_pos):
+    """Lemmatize each word"""
     global lemmatizer
     if token_pos[1].startswith('N'):
         return (lemmatizer.lemmatize(token_pos[0], wordnet.NOUN), token_pos[1])
@@ -108,16 +108,16 @@ def lemmatize(token_pos):
         return token_pos
 
 
-# check if the caption contains manually selected bad words
 def check_bad_words(token_pos_list):
+    """Check if the caption contains manually selected bad words"""
     for token in token_pos_list:
         if token[0] in bad_word_list:
             return False
     return True
 
 
-# update frenquency of unigram: nouns
 def update_unigram_freq(unigram):
+    """Update frenquency of unigram: nouns"""
     global unigram_dict
     pos = unigram[1]
     if pos in ['NN', 'NNS']:
@@ -130,10 +130,13 @@ def update_unigram_freq(unigram):
         return False
 
 
-# update frenquency of bigram: descriptor-object
-# first word: noun, adj, adv
-# second word: noun, adj
 def update_bigram_freq(bigram):
+    """
+    Update frenquency of bigram: descriptor-object, where:
+
+    - the first word: noun, adj, adv
+    - the second word: noun, adj
+    """
     global bigram_dict
     if bigram[0][1] in ['NN', 'NNS', 'JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS'] and bigram[1][1] in ['NN', 'NNS', 'JJ', 'JJR', 'JJS']:
         bigram_word = bigram[0][0] + '_' + bigram[1][0]
@@ -157,9 +160,8 @@ def update_ngram_freq(token_pos):
     return list(filtered_unigrams), list(filtered_bigrams)
 
 
-# calc informativeness score (based on tf-idf)
 def tf_idf(cap):
-
+    """Calc informativeness score based on TF-IDF"""
     global subjectivity_threshold, objectivity_threshold
     global unigram_dict, bigram_dict
 
@@ -195,7 +197,6 @@ def tf_idf(cap):
 
 
 if __name__ == '__main__':
-
     # read raw data from file 'raw_path'
     with open(raw_path, 'r', encoding = 'utf-8') as f:
         raw_data = json.load(f)

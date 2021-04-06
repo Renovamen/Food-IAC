@@ -1,8 +1,10 @@
-'''
-This is a crawler for crawling data from 'dpchallenge.com'.
-Proxy is required because of the anti-crawling mechanism of this site, or your IP will be blocked.
-Images will be saved under 'image_dir_path' and their info will be saved in 'cap_json_path'.
-'''
+"""
+This is a crawler for crawling data from 'dpchallenge.com'. Proxy is required
+because of the anti-crawling mechanism of this site, or your IP will be blocked.
+
+Images will be saved under `image_dir_path` and their information (comments,
+votes, etc.) will be saved in `cap_json_path`.
+"""
 
 import requests
 import re
@@ -70,24 +72,23 @@ def getResponse(url):
             time.sleep(wait_second)
 
 
-# get the number of pages
 def getPageNum():
+    """Get the number of pages"""
     response = getResponse(url)
     pageNum = re.findall(r'<small>\[(.*?)\]</small>', response.text)
     return int(pageNum[0])
 
 
-# get image list of each page
 def getImageList(page):
+    """Get the image list on each page"""
     pageURL = url + '&page=' + str(page)
     response = getResponse(pageURL)
     itemList = re.findall(r'width="20%"><a href="(.*?)" class="i"><img src="', response.text)
     return itemList
 
 
-# get the "Statistics" data of each image
 def getStat(soup):
-
+    """Get the "Statistics" data of each image"""
     infoList = soup.find_all('tr', {'class':'forum-bg1'})[1].contents[1].contents
     statData = {}
 
@@ -121,24 +122,25 @@ def getStat(soup):
     return statData
 
 
-# get all comments of each image
 def getComments(soup):
+    """Get all comments of each image"""
     comments = []
     for item in soup.find_all('table', {'class', 'forum-post'}):
         comments.append(item.contents[0].contents[0].get_text().strip())
     return comments
 
 
-# download an image
 def getImage(imgURL, imgID):
+    """download an image"""
     img_path = os.path.join(image_dir_path, imgID)
     response = getResponse(imgURL)
     with open(img_path, "wb") as f:
         f.write(response.content)
 
 
-# find out corrupt images and fix them
 def checkImage():
+    """Find out corrupt images and fix them"""
+
     # read data from 'cap_json_path'
     with open(cap_json_path, 'r', encoding = 'utf-8') as f:
         data = json.load(f)
@@ -154,7 +156,7 @@ def checkImage():
         while True:
             try:
                 # verify that it is in fact an validate image
-                img = Image.open(image_path).resize((256,256))
+                img = Image.open(image_path).resize((256, 256))
             # image corrupt
             except (IOError, SyntaxError, ValueError) as e:
                 print('Bad image:', imgID)
@@ -171,7 +173,6 @@ def checkImage():
 
 
 if __name__ == '__main__':
-
     pageNum = getPageNum()
     print("there are ", pageNum, " pages")
 

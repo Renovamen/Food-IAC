@@ -1,7 +1,9 @@
-'''
-Split dataset (of 6 aspects) into train, val and test set and generate tokens for them.
-Also split the whole dataset (regardless of the aspects), for training baseline.
-'''
+"""
+Split dataset (of 6 aspects) into train, val and test set and generate tokens
+for them.
+
+The whole dataset (regardless of aesthetic aspects) will also be splited.
+"""
 
 import os
 import json
@@ -29,18 +31,17 @@ all_path = os.path.join(base_path, 'clean.json')
 tokenizer = RegexpTokenizer(r'\w+\S*\w*')
 
 
-'''
-split indices of images into train, val and test set (6:1:1)
+def split_indice(img_num: int):
+    """
+    Split indices of images into train, val and test set (6:1:1)
 
-input param:
-    img_num(int): total number of images
+    Args:
+        img_num (int): Total number of images
 
-return:
-    train_indice(list): indices in train set (shuffled)
-    val_indice(list): indices in val set (shuffled)
-    test_indice(list): indices in test set (shuffled)
-'''
-def split_indice(img_num):
+    Returns:
+        indices (Tuple[list]): Indices in train / val / test set (shuffled)
+    """
+
     # calc number of images in each set
     train_num = int(img_num * 6 / 8)
     val_num = test_num = int(img_num * 1 / 8)
@@ -56,7 +57,6 @@ def split_indice(img_num):
 
 
 if __name__ == '__main__':
-
     json_path = [os.path.join(input_path, topic_path) for topic_path in aspect_name]
     json_path.append(all_path)
 

@@ -1,5 +1,6 @@
 /data/images/
 /data/glove/
+/data/lda/
 /outputs/
 /checkpoints/
 /logs/

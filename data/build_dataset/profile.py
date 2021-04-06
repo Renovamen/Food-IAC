@@ -1,6 +1,6 @@
-'''
-This script will give a simple profile of established dataset.
-'''
+"""
+This script is used to give a simple profile of established dataset.
+"""
 
 import os
 import json
@@ -60,9 +60,7 @@ def dict_size(image_list, min_word_freq = 5):
 
 
 if __name__ == '__main__':
-
     for item in file_name:
-
         path = os.path.join(folder_path, item)
 
         with open(path, 'r', encoding = 'utf-8') as f:
