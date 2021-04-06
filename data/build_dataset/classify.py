@@ -1,5 +1,5 @@
 """
-Classify captions into 6 aspects based on LDA model trained using `lda.py`:
+Classify captions into 6 aspects based on LDA model trained by `lda.py`:
 
 - color & light (color_light.json)
 - subject of image (subject.json)

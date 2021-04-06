@@ -3,6 +3,8 @@
 PyTorch implementation for paper [To be an Artist: Automatic Generation on Food
 Image Aesthetic Captioning](https://ieeexplore.ieee.org/document/9288208) (ICTAI 2020).
 
+Code is provided as-is, no updates expected.
+
 ![model overview](assets/model.png)
 
 
