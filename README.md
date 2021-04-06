@@ -12,7 +12,7 @@ Image Aesthetic Captioning](https://ieeexplore.ieee.org/document/9288208) (ICTAI
 
 Make sure your environment is installed with:
 
-- Python 3
+- Python 3.5+
 - java 1.8.0 (for computing METEOR and SPICE)
 
 Then install requirements:
@@ -42,19 +42,19 @@ python preprocess.py
 
 Single-Aspect Captioning Module is guaranteed to generate the captions and learn the feature representations of each aesthetic attribute.
 
-**Train**:
+To run **train**:
 
 ```bash
 python single_train.py
 ```
 
-To run **test** and compute metrics, edit `beam_size` in [single_test.py](single_test.py), then:
+To run **test** and compute metrics, edit `beam_size` in [`single_test.py`](single_test.py), then:
 
 ```bash
 python single_test.py
 ```
 
-To run **inference**, edit `image_path` and `beam_size` in [single_infer.py](single_infer.py), then:
+To run **inference**, edit `image_path` and `beam_size` in [`single_infer.py`](single_infer.py), then:
 
 ```bash
 python single_infer.py
@@ -64,19 +64,19 @@ python single_infer.py
 
 Multi-Aspect Captioning Module is supposed to study the associations among all feature representations and automatically aggregate captions of all aesthetic attributes to a final sentence.
 
-**Train**:
+To run **train**:
 
 ```bash
 python multi_train.py
 ```
 
-To run **test** and compute metrics, edit `model_path` and `multi_beam_k` in [multi_test.py](multi_test.py), then:
+To run **test** and compute metrics, edit `model_path` and `multi_beam_k` in [`multi_test.py`](multi_test.py), then:
 
 ```bash
 python multi_test.py
 ```
 
-To run **inference**, edit `image_path` and `multi_beam_k` in [multi_infer.py](multi_infer.py), then:
+To run **inference**, edit `image_path` and `multi_beam_k` in [`multi_infer.py`](multi_infer.py), then:
 
 ```bash
 python multi_infer.py
@@ -105,4 +105,4 @@ A dataset for food image aesthetic captioning was constructed to evaluate the pr
 
 - Implementation of single-aspect captioning module is based on [sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning).
 - Implementation of multi-aspect captioning module is based on [zphang/usc_dae](https://github.com/zphang/usc_dae).
-- Implementation of [evaluation metrics](src/metrics) are adopted from [ruotianluo/coco-caption](https://github.com/ruotianluo/coco-caption).
+- Implementation of [evaluation metrics](src/metrics) is adopted from [ruotianluo/coco-caption](https://github.com/ruotianluo/coco-caption).

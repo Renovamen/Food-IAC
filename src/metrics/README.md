@@ -1,6 +1,6 @@
 # Metrics
 
-This folder contains implementations of some evaluation metrics, some of them are adopted from [ruotianluo/coco-caption](https://github.com/ruotianluo/coco-caption). 
+This folder contains the implementation of some evaluation metrics, most of which are adopted from [ruotianluo/coco-caption](https://github.com/ruotianluo/coco-caption). 
 
 
 &nbsp;
@@ -12,7 +12,7 @@ This folder contains implementations of some evaluation metrics, some of them ar
 - [**METEOR**](http://www.cs.cmu.edu/~alavie/METEOR/)
 - **ROUGE-L**: [ROUGE: A Package for Automatic Evaluation of Summaries](https://www.aclweb.org/anthology/W04-1013.pdf). ACL 2004.
 - **SPICE**: [SPICE: Semantic Propositional Image Caption Evaluation](https://arxiv.org/abs/1607.08822). ECCV 2016.
-- **Novelty** & **Diversity**
+- **Novelty** & **Diversity**: See [our paper](https://ieeexplore.ieee.org/document/9288208)
 
 
 &nbsp;
