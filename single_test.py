@@ -98,9 +98,6 @@ def test(beam_size: int) -> Tuple[float]:
 
         assert len(ground_truth) == len(prediction)
 
-        if i >= 10:
-            break
-
     # calculate metrics
     metrics = Metrics(ground_truth, prediction, rev_word_map)
     scores = metrics.all_metrics

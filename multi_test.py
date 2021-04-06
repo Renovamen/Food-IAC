@@ -70,9 +70,6 @@ def test(beam_k: int, model: nn.Module) -> Tuple[float]:
 
         assert len(ground_truth) == len(prediction)
 
-        if i > 0:
-            break
-
     # calculate metrics
     metrics = Metrics(ground_truth, prediction, rev_word_map)
     novelty, diversity, spice = metrics.novelty, metrics.diversity, metrics.spice
